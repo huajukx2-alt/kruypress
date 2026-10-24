@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KluayPress AI Simulator & Engineering Analyzer | TSU Engineering</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans Thai"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              yellow: '#FACC15',
+              amber: '#F59E0B',
+              blue: '#0284C7',
+              dark: '#0B1120',
+              panel: '#111827',
+              border: '#1E293B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0B1120;
+      color: #F1F5F9;
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      overflow-x: hidden;
+    }
+    .cad-grid {
+      background-color: #0F172A;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+        linear-gradient(to right, rgba(56, 189, 248, 0.14) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.14) 1px, transparent 1px);
+      background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    }
+    .cad-light-grid {
+      background-color: #FBF7F0;
+      background-image: 
+        linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0F172A;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    input[type=range] {
+      accent-color: #FACC15;
+    }
+    @keyframes pulse-arrow {
+      0%, 100% { transform: translateY(0px); opacity: 0.95; }
+      50% { transform: translateY(4px); opacity: 0.55; }
+    }
+    @keyframes pulse-arrow-up {
+      0%, 100% { transform: translateY(0px); opacity: 0.95; }
+      50% { transform: translateY(-4px); opacity: 0.55; }
+    }
+    .anim-arrow-down {
+      animation: pulse-arrow 1s infinite ease-in-out;
+    }
+    .anim-arrow-up {
+      animation: pulse-arrow-up 1s infinite ease-in-out;
+    }
+    .callout-dot {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .callout-dot:hover {
+      filter: drop-shadow(0 0 8px #FACC15);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-yellow-400 selection:text-slate-900">
+
+  <!-- Top Navigation / Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-[1600px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20 text-slate-950 font-bold text-xl">
+          🍌
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg md:text-xl font-bold tracking-tight text-white">KluayPress <span class="text-yellow-400 font-mono text-sm px-2 py-0.5 bg-yellow-400/10 border border-yellow-400/30 rounded-md">CAD & AI Twin v2.4</span></h1>
+            <span class="hidden sm:inline-block text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2.5 py-0.5 rounded-full font-medium">TSU Engineering • ทีม ตึง ตึง โป๊ะ</span>
+          </div>
+          <p class="text-xs text-slate-400">ระบบจำลองกลศาสตร์เครื่องกดขึ้นรูปกล้วยแบบเท้าเหยียบควบคุมความหนา และวิเคราะห์เชิงวิศวกรรมด้วย AI</p>
+        </div>
+      </div>
+
+      <!-- Top Action Controls -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btnToggleThemeCanvas" onclick="toggleCanvasTheme()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+          <span id="themeIcon">☀️</span> <span id="themeText">โหมดพื้นหลังสว่าง (ตามสไลด์)</span>
+        </button>
+        <button id="btnToggleCallouts" onclick="toggleCallouts()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 transition flex items-center gap-1.5">
+          <span>🔍</span> <span id="calloutBtnText">ซ่อนป้ายชิ้นส่วน (Labels)</span>
+        </button>
+        <div class="h-5 w-[1px] bg-slate-800 hidden sm:block"></div>
+        <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button onclick="switchMainTab('simulator')" id="tabBtn-simulator" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-400 text-slate-950 transition">
+            ⚙️ จำลองกลไก & AI
+          </button>
+          <button onclick="switchMainTab('sequence')" id="tabBtn-sequence" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">
+            📐 แผนภาพ 3 ขั้นตอน (วาง-เหยียบ-คลาย)
+          </button>
+          <button onclick="switchMainTab('business')" id="tabBtn-business" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">
+            📊 เปรียบเทียบ & ต้นทุน BOM
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 py-4">
+
+    <!-- ==================== TAB 1: INTERACTIVE SIMULATOR & AI ANALYZER ==================== -->
+    <section id="tab-simulator" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+      <!-- Left & Center Column: Interactive Kinematic Visualizer (7 cols on lg) -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+
+        <!-- 3-Stage Process Bar (วาง -> เหยียบ -> คลาย) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-xl">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">หลักการทำงาน 3 ขั้นตอน (3-Step Kinematic Cycle)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400">กดปุ่ม <kbd class="px-1.5 py-0.5 text-[11px] font-mono bg-slate-800 text-yellow-400 rounded border border-slate-700">Spacebar</kbd> ค้างเพื่อเหยียบแป้นจริง</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2.5">
+            <!-- Step 1: วาง -->
+            <button onclick="setStepState(1)" id="stepBtn-1" class="group relative flex flex-col items-start p-3 rounded-xl border-2 border-yellow-400 bg-yellow-400/10 text-left transition-all">
+              <div class="flex items-center justify-between w-full mb-1">
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-yellow-400 text-slate-950">STEP 1</span>
+                <span class="text-lg">🍌⬇️</span>
+              </div>
+              <div class="font-bold text-base text-white group-hover:text-yellow-300">1. วาง (Place)</div>
+              <p class="text-[11px] text-slate-300 leading-tight mt-0.5">วางกล้วยบนแผ่นอะคริลิควางกล้วย แผ่นทับด้านบนเปิดออก</p>
+            </button>
+
+            <!-- Step 2: เหยียบ -->
+            <button onclick="setStepState(2)" id="stepBtn-2" class="group relative flex flex-col items-start p-3 rounded-xl border-2 border-slate-800 bg-slate-950/70 hover:border-slate-700 text-left transition-all">
+              <div class="flex items-center justify-between w-full mb-1">
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">STEP 2</span>
+                <span class="text-lg">🦶⬇️</span>
+              </div>
+              <div class="font-bold text-base text-white group-hover:text-yellow-300">2. เหยียบ (Press)</div>
+              <p class="text-[11px] text-slate-400 leading-tight mt-0.5">เหยียบแป้นดึงขาเชื่อมต่อลง แผ่นอะคริลิคทับกล้วยชนแหวนรอง</p>
+            </button>
+
+            <!-- Step 3: คลาย -->
+            <button onclick="setStepState(3)" id="stepBtn-3" class="group relative flex flex-col items-start p-3 rounded-xl border-2 border-slate-800 bg-slate-950/70 hover:border-slate-700 text-left transition-all">
+              <div class="flex items-center justify-between w-full mb-1">
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">STEP 3</span>
+                <span class="text-lg">🔄⬆️</span>
+              </div>
+              <div class="font-bold text-base text-white group-hover:text-yellow-300">3. คลาย (Release)</div>
+              <p class="text-[11px] text-slate-400 leading-tight mt-0.5">ปล่อยเท้า สปริงดึงชุดแผ่นทับและแป้นเหยียบคืนกลับอัตโนมัติ</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Dual-View CAD Canvas Card -->
+        <div id="canvasContainer" class="cad-grid border border-slate-800 rounded-2xl p-4 relative flex flex-col justify-between min-h-[540px] shadow-2xl transition-colors duration-300">
+          
+          <!-- Top Overlay Status Banner -->
+          <div class="flex flex-wrap items-center justify-between gap-2 z-10 mb-2">
+            <div class="flex items-center gap-2 bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700/80 shadow">
+              <span id="stateBadgeDot" class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+              <span id="stateBadgeTitle" class="text-xs font-bold text-white">สถานะ: 1. วางกล้วย (Place Mode)</span>
+              <span class="text-slate-600">|</span>
+              <span id="stopContactBadge" class="text-xs font-mono text-slate-400">Mechanical Stop: OPEN</span>
+            </div>
+
+            <div class="flex items-center gap-2 bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700/80 shadow text-xs font-mono">
+              <span class="text-slate-400">ระยะกด:</span>
+              <span id="readoutStroke" class="text-yellow-400 font-bold">0.0 mm</span>
+              <span class="text-slate-600">|</span>
+              <span class="text-slate-400">ความหนากล้วย:</span>
+              <span id="readoutBananaThick" class="text-emerald-400 font-bold">28.0 mm</span>
+            </div>
+          </div>
+
+          <!-- Main Interactive SVG Viewport (Isometric + Side View) -->
+          <div class="relative flex-1 flex items-center justify-center my-1">
+            <svg id="kluaySvg" viewBox="0 0 860 470" class="w-full h-auto max-h-[460px] select-none overflow-visible">
+              <defs>
+                <!-- Metallic Gradients matching CAD Grey/Blue-Grey style -->
+                <linearGradient id="steelFrameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#94A3B8" />
+                  <stop offset="50%" stop-color="#64748B" />
+                  <stop offset="100%" stop-color="#475569" />
+                </linearGradient>
+                <linearGradient id="steelPlateGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#CBD5E1" />
+                  <stop offset="100%" stop-color="#64748B" />
+                </linearGradient>
+                <linearGradient id="shaftGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#64748B" />
+                  <stop offset="40%" stop-color="#E2E8F0" />
+                  <stop offset="100%" stop-color="#475569" />
+                </linearGradient>
+                <linearGradient id="acrylicUpperGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.55" />
+                  <stop offset="50%" stop-color="#BAE6FD" stop-opacity="0.75" />
+                  <stop offset="100%" stop-color="#0284C7" stop-opacity="0.55" />
+                </linearGradient>
+                <linearGradient id="acrylicLowerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#1E293B" />
+                  <stop offset="50%" stop-color="#334155" />
+                  <stop offset="100%" stop-color="#0F172A" />
+                </linearGradient>
+                <linearGradient id="bananaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#FEF08A" />
+                  <stop offset="60%" stop-color="#FACC15" />
+                  <stop offset="100%" stop-color="#CA8A04" />
+                </linearGradient>
+                <linearGradient id="pedalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#A8A29E" />
+                  <stop offset="100%" stop-color="#78716C" />
+                </linearGradient>
+                <filter id="glowYellow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#FACC15" flood-opacity="0.6"/>
+                </filter>
+              </defs>
+
+              <!-- ================= LEFT SIDE: ISOMETRIC 3D CAD VIEW ================= -->
+              <g id="isoViewGroup" transform="translate(20, 15)">
+                <text x="165" y="18" text-anchor="middle" class="fill-sky-400 font-mono text-xs font-bold tracking-wider">ISOMETRIC CAD VIEW (มุมมอง 3 มิติ)</text>
+
+                <!-- Isometric Base Frame Legs -->
+                <!-- Back-Left & Back-Right Legs -->
+                <polygon points="95,180 112,172 112,375 95,383" fill="#475569" stroke="#1E293B" stroke-width="1.5"/>
+                <polygon points="265,165 282,157 282,360 265,368" fill="#475569" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Lower Horizontal Crossbars -->
+                <polygon points="95,340 265,320 265,335 95,355" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
+                <polygon points="65,395 195,435 195,450 65,410" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
+                <polygon points="195,390 282,335 282,350 195,405" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
+
+                <!-- Front-Left & Front-Right Legs -->
+                <polygon points="65,205 82,197 82,415 65,423" fill="url(#steelFrameGrad)" stroke="#1E293B" stroke-width="1.5"/>
+                <polygon points="180,245 198,237 198,450 180,458" fill="url(#steelFrameGrad)" stroke="#1E293B" stroke-width="1.5"/>
+
+                <!-- Front Prep Shelf (ชั้นวางหน้าเครื่องพร้อมแกนตั้ง) -->
+                <polygon points="15,175 180,235 210,218 45,158" fill="#94A3B8" stroke="#1E293B" stroke-width="1.5"/>
+                <polygon points="15,175 180,235 180,244 15,184" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Prep Shelf Pins -->
+                <rect x="34" y="132" width="8" height="32" rx="3" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.2"/>
+                <rect x="172" y="182" width="8" height="32" rx="3" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.2"/>
+
+                <!-- Lower Fixed Acrylic Base Plate (แผ่นอะคริลิควางกล้วย) -->
+                <polygon points="78,150 202,198 278,152 154,104" fill="url(#acrylicLowerGrad)" stroke="#0F172A" stroke-width="1.8"/>
+                <polygon points="78,150 202,198 202,208 78,160" fill="#1E293B" stroke="#0F172A" stroke-width="1.5"/>
+                <polygon points="202,198 278,152 278,162 202,208" fill="#0F172A" stroke="#0F172A" stroke-width="1.5"/>
+
+                <!-- Isometric Bananas on Plate -->
+                <g id="isoBananasGroup">
+                  <ellipse id="isoBanana1" cx="152" cy="148" rx="22" ry="12" fill="url(#bananaGrad)" stroke="#A16207" stroke-width="1.2"/>
+                  <ellipse id="isoBanana2" cx="195" cy="164" rx="22" ry="12" fill="url(#bananaGrad)" stroke="#A16207" stroke-width="1.2"/>
+                </g>
+
+                <!-- Main Rear Vertical Round Steel Column (แกนเหล็กกลมหลัก) -->
+                <rect x="208" y="32" width="22" height="128" rx="4" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.5"/>
+                <ellipse cx="219" cy="32" rx="11" ry="4" fill="#CBD5E1" stroke="#1E293B" stroke-width="1.5"/>
+
+                <!-- Thickness Adjustment Washers on Iso Shaft (แหวนรองปรับแต่งความหนา) -->
+                <g id="isoWashersGroup">
+                  <rect id="isoWasherRect" x="206" y="140" width="26" height="10" rx="2" fill="#F59E0B" stroke="#78350F" stroke-width="1.2"/>
+                </g>
+
+                <!-- Isometric Foot Pedal (แป้นเหยียบ) -->
+                <g id="isoPedalGroup">
+                  <!-- Pivot Rod at bottom right -->
+                  <line x1="165" y1="322" x2="255" y2="365" stroke="#475569" stroke-width="8" stroke-linecap="round"/>
+                  <!-- Foot Pedal Plate -->
+                  <polygon id="isoPedalPoly" points="95,348 165,378 228,348 158,320" fill="url(#pedalGrad)" stroke="#1E293B" stroke-width="1.5"/>
+                </g>
+
+                <!-- Isometric Moving Assembly (Upper Pressing Plate + Side Linkage Arms + Anti-rotation Guide) -->
+                <g id="isoMovingGroup" transform="translate(0, 0)">
+                  <!-- Side Linkage U-Frame (ขาเชื่อมต่อแป้นเหยียบ) -->
+                  <polygon points="224,142 236,135 236,292 224,299" fill="#94A3B8" stroke="#1E293B" stroke-width="1.5"/>
+                  <polygon points="185,275 236,292 236,302 185,285" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
+                  <!-- Linkage Rod to Pedal -->
+                  <line x1="158" y1="220" x2="158" y2="348" stroke="#CBD5E1" stroke-width="5" stroke-linecap="round"/>
+
+                  <!-- Upper Pressing Plate (แผ่นสแตนเลส + แผ่นอะคริลิคทับกล้วย) -->
+                  <!-- Acrylic Bottom Layer -->
+                  <polygon points="74,106 202,156 280,108 152,58" fill="url(#acrylicUpperGrad)" stroke="#0284C7" stroke-width="1.5"/>
+                  <!-- Stainless Top Layer -->
+                  <polygon points="74,98 202,148 280,100 152,50" fill="url(#steelPlateGrad)" stroke="#1E293B" stroke-width="1.5"/>
+                  <polygon points="74,98 202,148 202,156 74,106" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
+                  <polygon points="202,148 280,100 280,108 202,156" fill="#475569" stroke="#1E293B" stroke-width="1.5"/>
+                </g>
+
+                <!-- Upper Stationary Spring Bracket Plate (แผ่นยึดสปริง + ตัวปรับเลื่อนตัวยึดสปริง) -->
+                <g id="isoTopBracketGroup">
+                  <!-- Guide Rod (กระบอกเลื่อนล็อคแกนไม่ให้เกิดการหมุน) -->
+                  <rect x="148" y="45" width="10" height="65" rx="3" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.2"/>
+                  <!-- Top Plate -->
+                  <polygon points="74,64 198,112 268,68 144,20" fill="url(#steelPlateGrad)" stroke="#1E293B" stroke-width="1.5"/>
+                  <polygon points="74,64 198,112 198,120 74,72" fill="#64748B" stroke="#1E293B" stroke-width="1.5"/>
+                  <polygon points="198,112 268,68 268,76 198,120" fill="#475569" stroke="#1E293B" stroke-width="1.5"/>
+                  <!-- Horizontal Arm Clamp to Main Column -->
+                  <polygon points="175,62 218,38 226,48 183,72" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.5"/>
+                  <!-- Guide Rod Top Nut & Spring Coil -->
+                  <rect x="148" y="25" width="10" height="35" rx="2" fill="#64748B" stroke="#1E293B" stroke-width="1.2"/>
+                  <polygon points="144,38 162,38 159,45 147,45" fill="#CBD5E1" stroke="#1E293B" stroke-width="1.2"/>
+                </g>
+              </g>
+
+              <!-- Center Divider Line -->
+              <line x1="355" y1="20" x2="355" y2="450" stroke="#334155" stroke-width="1.5" stroke-dasharray="6,6"/>
+
+              <!-- ================= RIGHT SIDE: ENGINEERING SIDE VIEW (KINEMATIC DIAGRAM) ================= -->
+              <g id="sideViewGroup" transform="translate(380, 15)">
+                <text x="235" y="18" text-anchor="middle" class="fill-yellow-400 font-mono text-xs font-bold tracking-wider">SIDE VIEW KINEMATICS (ภาพฉายด้านข้างตามหลักการทำงานจริง)</text>
+
+                <!-- 1. Main Stationary Frame Structure (โครงสร้างหลัก) -->
+                <!-- Front Prep Shelf Bracket (ชั้นวางด้านหน้าซ้าย) -->
+                <polygon points="70,192 140,192 140,199 70,199" fill="#94A3B8" stroke="#1E293B" stroke-width="1.5"/>
+                <line x1="95" y1="199" x2="140" y2="242" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+                <!-- Vertical Pin on Prep Shelf -->
+                <rect x="85" y="154" width="8" height="38" rx="2" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.5"/>
+
+                <!-- Left Vertical Frame Leg -->
+                <rect x="140" y="185" width="18" height="255" fill="url(#steelFrameGrad)" stroke="#1E293B" stroke-width="1.8"/>
+                <!-- Right Vertical Frame Leg -->
+                <rect x="292" y="185" width="18" height="255" fill="url(#steelFrameGrad)" stroke="#1E293B" stroke-width="1.8"/>
+
+                <!-- Top Frame Horizontal Table Support -->
+                <rect x="140" y="182" width="170" height="10" fill="#64748B" stroke="#1E293B" stroke-width="1.8"/>
+                <!-- Lower Frame Horizontal Crossbar -->
+                <rect x="158" y="355" width="134" height="16" fill="url(#steelFrameGrad)" stroke="#1E293B" stroke-width="1.8"/>
+
+                <!-- Lower Fixed Food-Grade Acrylic Plate (แผ่นอะคริลิควางกล้วย) -->
+                <rect x="142" y="174" width="148" height="8" rx="1" fill="url(#acrylicLowerGrad)" stroke="#0F172A" stroke-width="1.5"/>
+
+                <!-- Main Right Vertical Round Steel Shaft (แกนเหล็กกลมหลัก) -->
+                <rect x="290" y="42" width="22" height="140" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.8"/>
+                <!-- Shaft Cap (ฝาปิดแกน) -->
+                <rect x="288" y="34" width="26" height="10" rx="2" fill="#94A3B8" stroke="#1E293B" stroke-width="1.8"/>
+
+                <!-- Top Spring Bracket Adjuster Clamp (ตัวปรับเลื่อนตัวยึดสปริง + แผ่นยึดสปริง) -->
+                <rect x="285" y="48" width="38" height="24" rx="2" fill="#64748B" stroke="#1E293B" stroke-width="1.8"/>
+                <rect x="316" y="52" width="8" height="16" fill="#475569" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Horizontal Cantilever Pipe -->
+                <rect x="210" y="50" width="78" height="18" rx="3" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.8"/>
+                <!-- Stationary Upper Spring Mounting Plate (แผ่นยึดสปริง) -->
+                <rect x="136" y="68" width="144" height="9" rx="1" fill="url(#steelPlateGrad)" stroke="#1E293B" stroke-width="1.8"/>
+
+                <!-- Anti-Rotation Guide Shaft on Left (กระบอกเลื่อนล็อคแกนไม่ให้เกิดการหมุน) -->
+                <rect id="antiRotationRod" x="150" y="20" width="10" height="105" rx="2" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Lock Nut on Guide Shaft -->
+                <rect x="146" y="34" width="18" height="7" rx="1" fill="#CBD5E1" stroke="#1E293B" stroke-width="1.5"/>
+
+                <!-- MECHANICAL STOP / THICKNESS WASHERS (แหวนรองปรับแต่งความหนา) -->
+                <!-- Positioned around main shaft right above the base collar -->
+                <g id="sideWashersGroup">
+                  <!-- Base Collar on Main Shaft -->
+                  <rect x="287" y="168" width="28" height="14" fill="#475569" stroke="#1E293B" stroke-width="1.5"/>
+                  <!-- Dynamic Washer Stack (height scales with washer mm setting) -->
+                  <rect id="sideWasherStack" x="286" y="156" width="30" height="12" rx="1" fill="#F59E0B" stroke="#78350F" stroke-width="1.5"/>
+                  <!-- Dashed Highlight Circle around Mechanical Stop (like in reference image) -->
+                  <circle id="washerZoomCircle" cx="301" cy="160" r="18" fill="none" stroke="#FACC15" stroke-width="1.5" stroke-dasharray="3,3"/>
+                </g>
+
+                <!-- BANANAS ON LOWER ACRYLIC PLATE + STATE ARROWS -->
+                <g id="sideBananasGroup">
+                  <!-- Left Banana Cross-Section -->
+                  <rect id="sideBananaLeft" x="156" y="146" width="44" height="28" rx="12" fill="url(#bananaGrad)" stroke="#CA8A04" stroke-width="1.8"/>
+                  <!-- Right Banana Cross-Section -->
+                  <rect id="sideBananaRight" x="234" y="146" width="44" height="28" rx="12" fill="url(#bananaGrad)" stroke="#CA8A04" stroke-width="1.8"/>
+
+                  <!-- STEP 1: Red Downward Placement/Pressing Arrows inside Bananas (ตรงตามรูปต้นแบบ 'วาง') -->
+                  <g id="step1Arrows" class="anim-arrow-down">
+                    <!-- Left banana arrows -->
+                    <path d="M168,150 L168,168 M164,163 L168,169 L172,163" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M188,150 L188,168 M184,163 L188,169 L192,163" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <!-- Right banana arrows -->
+                    <path d="M246,150 L246,168 M242,163 L246,169 L250,163" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M266,150 L266,168 M262,163 L266,169 L270,163" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  </g>
+
+                  <!-- STEP 3: Red Upward Release/Return Arrows (ตรงตามรูปต้นแบบ 'คลาย') -->
+                  <g id="step3Arrows" class="anim-arrow-up" style="display: none;">
+                    <path d="M168,164 L168,132 M163,138 L168,130 L173,138" stroke="#EF4444" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M186,164 L186,132 M181,138 L186,130 L191,138" stroke="#EF4444" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M246,164 L246,132 M241,138 L246,130 L251,138" stroke="#EF4444" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M264,164 L264,132 M259,138 L264,130 L269,138" stroke="#EF4444" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  </g>
+                </g>
+
+                <!-- DYNAMIC STAINLESS RETURN SPRING (สปริงดึงกลับ - ยืดหดตามตำแหน่งแผ่นกด) -->
+                <path id="returnSpringPath" d="M214,77 L214,115" stroke="#E2E8F0" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- 2. MOVING UPPER PRESSING ASSEMBLY (ชุดแผ่นกดกล้วย + ขาเชื่อมต่อแป้นเหยียบ) -->
+                <g id="sideMovingGroup" transform="translate(0, 0)">
+                  <!-- Sliding Sleeve on Right Main Shaft -->
+                  <rect x="286" y="108" width="30" height="22" rx="2" fill="#94A3B8" stroke="#1E293B" stroke-width="1.8"/>
+                  <!-- Stainless Steel Upper Backing Plate (แผ่นสแตนเลส) -->
+                  <rect x="136" y="112" width="154" height="8" rx="1" fill="url(#steelPlateGrad)" stroke="#1E293B" stroke-width="1.8"/>
+                  <!-- Food-Grade Acrylic Upper Pressing Plate (แผ่นอะคริลิคทับกล้วย) -->
+                  <rect x="136" y="120" width="154" height="8" rx="1" fill="url(#acrylicUpperGrad)" stroke="#0284C7" stroke-width="1.8"/>
+
+                  <!-- Vertical Side Linkage Bar (ขาเชื่อมต่อแป้นเหยียบ) -->
+                  <rect x="205" y="106" width="18" height="190" rx="2" fill="url(#steelFrameGrad)" stroke="#1E293B" stroke-width="1.8"/>
+                  <!-- Lower Linkage Rod (ข้อต่อแป้นเหยียบกับขาเชื่อมต่อ) -->
+                  <rect x="211" y="296" width="6" height="68" fill="#CBD5E1" stroke="#1E293B" stroke-width="1.5"/>
+                  <circle cx="214" cy="296" r="4" fill="#FACC15" stroke="#1E293B" stroke-width="1.2"/>
+                </g>
+
+                <!-- 3. FOOT PEDAL LEVER (แป้นเหยียบและจุดหมุนคานทดแรง) -->
+                <g id="sidePedalGroup">
+                  <!-- Fixed Pivot Hinge on Right Leg (จุดหมุนแป้นเหยียบ) -->
+                  <circle cx="286" cy="396" r="8" fill="#475569" stroke="#1E293B" stroke-width="2"/>
+                  <circle cx="286" cy="396" r="3.5" fill="#CBD5E1"/>
+                  <!-- Dynamic Pedal Lever Arm -->
+                  <line id="sidePedalBar" x1="286" y1="396" x2="126" y2="342" stroke="url(#steelFrameGrad)" stroke-width="8" stroke-linecap="round"/>
+                  <line id="sidePedalBarOutline" x1="286" y1="396" x2="126" y2="342" stroke="#1E293B" stroke-width="1.5" stroke-linecap="round"/>
+                  <!-- Foot Pad at Tip -->
+                  <circle id="sidePedalTip" cx="126" cy="342" r="6" fill="#FACC15" stroke="#1E293B" stroke-width="1.8"/>
+                  <!-- Pin Joint where Linkage Rod meets Pedal -->
+                  <circle id="sidePedalJoint" cx="214" cy="372" r="5" fill="#38BDF8" stroke="#0F172A" stroke-width="1.5"/>
+                </g>
+
+                <!-- MAGNIFIED INSET: MECHANICAL STOP & WASHER DETAIL (ขยายดูแหวนรองปรับความหนา) -->
+                <g id="washerInsetGroup" transform="translate(355, 105)">
+                  <rect x="0" y="0" width="110" height="105" rx="12" fill="#0F172A" fill-opacity="0.9" stroke="#334155" stroke-width="1.5"/>
+                  <text x="55" y="18" text-anchor="middle" class="fill-yellow-400 font-mono text-[10px] font-bold">MECHANICAL STOP</text>
+                  <!-- Mini zoomed shaft & washers -->
+                  <rect x="35" y="25" width="40" height="60" fill="url(#shaftGrad)" stroke="#1E293B" stroke-width="1.2"/>
+                  <!-- Zoomed Moving Upper Sleeve -->
+                  <rect id="zoomTopSleeve" x="28" y="24" width="54" height="16" rx="2" fill="#94A3B8" stroke="#1E293B" stroke-width="1.5"/>
+                  <!-- Zoomed Washer Stack -->
+                  <rect id="zoomWasherStack" x="29" y="54" width="52" height="16" rx="2" fill="#F59E0B" stroke="#78350F" stroke-width="1.5"/>
+                  <!-- Zoomed Base Collar -->
+                  <rect x="28" y="70" width="54" height="14" fill="#475569" stroke="#1E293B" stroke-width="1.5"/>
+                  <text id="zoomWasherText" x="55" y="97" text-anchor="middle" class="fill-emerald-400 font-mono text-[10px] font-bold">แหวนรอง: 5.0 mm</text>
+                </g>
+
+                <!-- INTERACTIVE CALLOUT LABELS (ป้ายชี้ส่วนประกอบเครื่องตามหน้า 5 ของ PDF) -->
+                <g id="calloutGroup">
+                  <!-- 1. ฝาปิดแกน -->
+                  <g class="callout-dot" onclick="inspectPart('shaftCap')">
+                    <line x1="301" y1="34" x2="345" y2="22" stroke="#38BDF8" stroke-width="1.2"/>
+                    <circle cx="301" cy="34" r="4" fill="#38BDF8"/>
+                    <rect x="345" y="10" width="76" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+                    <text x="383" y="23" text-anchor="middle" class="fill-sky-300 text-[10px] font-medium">1. ฝาปิดแกน</text>
+                  </g>
+
+                  <!-- 2. ตัวปรับเลื่อนตัวยึดสปริง -->
+                  <g class="callout-dot" onclick="inspectPart('springBracket')">
+                    <line x1="322" y1="58" x2="348" y2="58" stroke="#38BDF8" stroke-width="1.2"/>
+                    <circle cx="322" cy="58" r="4" fill="#38BDF8"/>
+                    <rect x="348" y="47" width="120" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+                    <text x="408" y="60" text-anchor="middle" class="fill-sky-300 text-[10px] font-medium">2. ตัวปรับเลื่อนตัวยึดสปริง</text>
+                  </g>
+
+                  <!-- 3. สปริงดึงกลับ -->
+                  <g class="callout-dot" onclick="inspectPart('returnSpring')">
+                    <line x1="214" y1="92" x2="95" y2="85" stroke="#FACC15" stroke-width="1.2"/>
+                    <circle cx="214" cy="92" r="4" fill="#FACC15"/>
+                    <rect x="2" y="74" width="93" height="20" rx="4" fill="#0F172A" stroke="#FACC15" stroke-width="1"/>
+                    <text x="48" y="87" text-anchor="middle" class="fill-yellow-300 text-[10px] font-medium">3. สปริงสเตนเลส</text>
+                  </g>
+
+                  <!-- 4. กระบอกเลื่อนล็อคแกน -->
+                  <g class="callout-dot" onclick="inspectPart('antiRotation')">
+                    <line x1="150" y1="45" x2="95" y2="45" stroke="#38BDF8" stroke-width="1.2"/>
+                    <circle cx="150" cy="45" r="4" fill="#38BDF8"/>
+                    <rect x="-8" y="34" width="103" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+                    <text x="43" y="47" text-anchor="middle" class="fill-sky-300 text-[10px] font-medium">4. กระบอกล็อคแกน</text>
+                  </g>
+
+                  <!-- 5. แผ่นอะคริลิคทับกล้วย -->
+                  <g class="callout-dot" onclick="inspectPart('upperPlate')">
+                    <line x1="138" y1="124" x2="92" y2="120" stroke="#38BDF8" stroke-width="1.2"/>
+                    <circle cx="138" cy="124" r="4" fill="#38BDF8"/>
+                    <rect x="-12" y="109" width="104" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+                    <text x="40" y="122" text-anchor="middle" class="fill-sky-300 text-[10px] font-medium">5. แผ่นอะคริลิคทับกล้วย</text>
+                  </g>
+
+                  <!-- 6. แผ่นอะคริลิควางกล้วย -->
+                  <g class="callout-dot" onclick="inspectPart('lowerPlate')">
+                    <line x1="142" y1="178" x2="92" y2="225" stroke="#38BDF8" stroke-width="1.2"/>
+                    <circle cx="142" cy="178" r="4" fill="#38BDF8"/>
+                    <rect x="-12" y="215" width="104" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+                    <text x="40" y="228" text-anchor="middle" class="fill-sky-300 text-[10px] font-medium">6. แผ่นอะคริลิควางกล้วย</text>
+                  </g>
+
+                  <!-- 7. แหวนรองปรับแต่งความหนา -->
+                  <g class="callout-dot" onclick="inspectPart('washers')">
+                    <line x1="316" y1="162" x2="355" y2="162" stroke="#FACC15" stroke-width="1.5"/>
+                    <circle cx="316" cy="162" r="4.5" fill="#FACC15"/>
+                  </g>
+
+                  <!-- 8. ขาเชื่อมต่อแป้นเหยียบ -->
+                  <g class="callout-dot" onclick="inspectPart('linkageBar')">
+                    <line x1="223" y1="255" x2="345" y2="255" stroke="#38BDF8" stroke-width="1.2"/>
+                    <circle cx="223" cy="255" r="4" fill="#38BDF8"/>
+                    <rect x="345" y="244" width="110" height="20" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+                    <text x="400" y="257" text-anchor="middle" class="fill-sky-300 text-[10px] font-medium">8. ขาเชื่อมต่อแป้นเหยียบ</text>
+                  </g>
+
+                  <!-- 9. แป้นเหยียบ -->
+                  <g class="callout-dot" onclick="inspectPart('footPedal')">
+                    <line x1="175" y1="360" x2="95" y2="360" stroke="#FACC15" stroke-width="1.2"/>
+                    <circle cx="175" cy="360" r="4" fill="#FACC15"/>
+                    <rect x="5" y="349" width="90" height="20" rx="4" fill="#0F172A" stroke="#FACC15" stroke-width="1"/>
+                    <text x="50" y="362" text-anchor="middle" class="fill-yellow-300 text-[10px] font-medium">9. แป้นเหยียบ</text>
+                  </g>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Part Inspector Tooltip Bar + Interactive Pedal Controls -->
+          <div class="z-10 flex flex-col gap-3 bg-slate-900/95 backdrop-blur p-3.5 rounded-xl border border-slate-800">
+            
+            <!-- Selected Part Explanation Banner -->
+            <div id="partInspectorBox" class="flex items-start justify-between gap-3 bg-slate-950/90 px-3.5 py-2.5 rounded-lg border border-slate-800/90 text-xs">
+              <div class="flex items-start gap-2.5">
+                <span class="text-base mt-0.5">🔩</span>
+                <div>
+                  <span id="partInspectorTitle" class="font-bold text-yellow-400">คลิกที่จุดชิ้นส่วนบนภาพเพื่อดูหน้าที่ทางวิศวกรรม: แหวนรองปรับแต่งความหนา (Mechanical Stop)</span>
+                  <p id="partInspectorDesc" class="text-slate-300 mt-0.5 leading-relaxed">
+                    กำหนดระยะหยุดของแผ่นกดด้านบน (Mechanical Stop) ช่วยควบคุมความหนาของกล้วยทับให้สม่ำเสมอทุกชิ้น (ความคลาดเคลื่อนเพียง ±0-5%) ป้องกันการกดแรงเกินไปจนเกิดของเสีย
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Pedal Slider & Hold-to-Press Button -->
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex items-center gap-2.5">
+                <button id="btnHoldPress" 
+                  onmousedown="startHoldPedal()" onmouseup="releaseHoldPedal()" onmouseleave="releaseHoldPedal()"
+                  ontouchstart="startHoldPedal(event)" ontouchend="releaseHoldPedal(event)"
+                  class="px-4 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-yellow-500/20 active:scale-95 transition flex items-center gap-2 select-none cursor-pointer">
+                  <span>🦶</span> <span>กดค้างเพื่อเหยียบแป้น (Hold / Space)</span>
+                </button>
+
+                <button id="btnAutoCycle" onclick="toggleAutoCycle()" class="px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                  <span id="autoCycleIcon">▶️</span> <span id="autoCycleText">จำลองอัตโนมัติ (Auto Loop)</span>
+                </button>
+              </div>
+
+              <!-- Manual Pedal Travel Slider -->
+              <div class="flex-1 min-w-[220px] flex items-center gap-3 bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-800">
+                <span class="text-xs font-medium text-slate-400 whitespace-nowrap">ระยะเหยียบแป้น:</span>
+                <input id="pedalSlider" type="range" min="0" max="100" value="0" oninput="onManualSliderInput(this.value)" class="w-full cursor-pointer" />
+                <span id="pedalPercentText" class="text-xs font-mono font-bold text-yellow-400 w-10 text-right">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Engineering Telemetry Cards (4 Metrics) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+            <div class="text-[11px] text-slate-400 flex items-center justify-between">
+              <span>แรงกดสุทธิที่กล้วย (Net Force)</span>
+              <span class="text-sky-400 font-mono">F_net</span>
+            </div>
+            <div id="metricNetForce" class="text-xl font-mono font-bold text-white mt-1">365 N</div>
+            <div id="metricPressureNote" class="text-[11px] text-emerald-400 mt-0.5">ทดแรงคาน 1:3.0 (ทุ่นแรงขา)</div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+            <div class="text-[11px] text-slate-400 flex items-center justify-between">
+              <span>แรงดึงกลับสปริง (Spring Force)</span>
+              <span class="text-yellow-400 font-mono">F_spring</span>
+            </div>
+            <div id="metricSpringForce" class="text-xl font-mono font-bold text-yellow-400 mt-1">18 N</div>
+            <div id="metricReturnTime" class="text-[11px] text-slate-400 mt-0.5">เวลาคืนกลับ: 0.32 วินาที</div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+            <div class="text-[11px] text-slate-400 flex items-center justify-between">
+              <span>ความหนากล้วยที่ได้ (Thickness)</span>
+              <span class="text-emerald-400 font-mono">±0-5%</span>
+            </div>
+            <div id="metricFinalThickness" class="text-xl font-mono font-bold text-emerald-400 mt-1">5.0 mm</div>
+            <div id="metricQualityBadge" class="text-[11px] text-emerald-300 mt-0.5">ได้มาตรฐานเดียวกันทุกชิ้น</div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+            <div class="text-[11px] text-slate-400 flex items-center justify-between">
+              <span>กำลังการผลิต (Throughput)</span>
+              <span class="text-amber-400 font-mono">+400%</span>
+            </div>
+            <div id="metricThroughput" class="text-xl font-mono font-bold text-white mt-1">18 ชิ้น/นาที</div>
+            <div class="text-[11px] text-amber-400 mt-0.5">ทำงานต่อเนื่อง 4-6 ชม. ไม่ล้า</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Engineering Parameters & Gemini AI Engineering Analyzer (5 cols on lg) -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+
+        <!-- Engineering Parameter Tuning Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>🎛️</span> <span>พารามิเตอร์ทางวิศวกรรม (Engineering Parameters)</span>
+            </h2>
+            <button onclick="resetDefaultParams()" class="text-xs text-slate-400 hover:text-yellow-400 transition">รีเซ็ตค่ามาตรฐาน</button>
+          </div>
+
+          <div class="space-y-3.5 text-xs">
+            <!-- 1. Washer Thickness -->
+            <div>
+              <div class="flex justify-between mb-1">
+                <label class="text-slate-300 font-medium">1. แหวนรองปรับแต่งความหนา (Target Thickness Stop)</label>
+                <span id="valWasherMm" class="font-mono font-bold text-yellow-400">5.0 mm (แหวน 2 วง)</span>
+              </div>
+              <input id="paramWasherMm" type="range" min="2" max="12" step="0.5" value="5" oninput="updateEngineeringParams()" class="w-full" />
+              <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                <span>2 mm (กล้วยอบแผ่นบางกรอบ)</span>
+                <span>5-6 mm (กล้วยทับอบธัญพืชติดหนึบ)</span>
+                <span>12 mm (กล้วยปิ้งหนา)</span>
+              </div>
+            </div>
+
+            <!-- 2. Applied Foot Force & Lever Ratio -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
+                <div class="flex justify-between mb-1">
+                  <label class="text-slate-300">แรงเหยียบเท้า (Foot Force)</label>
+                  <span id="valFootForce" class="font-mono font-bold text-sky-400">140 N (~14 kgf)</span>
+                </div>
+                <input id="paramFootForce" type="range" min="60" max="300" step="10" value="140" oninput="updateEngineeringParams()" class="w-full" />
+              </div>
+
+              <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
+                <div class="flex justify-between mb-1">
+                  <label class="text-slate-300">อัตราทดคาน (Lever Ratio)</label>
+                  <span id="valLeverRatio" class="font-mono font-bold text-sky-400">1 : 3.0</span>
+                </div>
+                <input id="paramLeverRatio" type="range" min="2.0" max="4.5" step="0.5" value="3.0" oninput="updateEngineeringParams()" class="w-full" />
+              </div>
+            </div>
+
+            <!-- 3. Spring Constant & Bananas per cycle -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
+                <div class="flex justify-between mb-1">
+                  <label class="text-slate-300">ค่าคงที่สปริงดึงกลับ (k)</label>
+                  <span id="valSpringK" class="font-mono font-bold text-emerald-400">1,200 N/m</span>
+                </div>
+                <input id="paramSpringK" type="range" min="600" max="2400" step="100" value="1200" oninput="updateEngineeringParams()" class="w-full" />
+              </div>
+
+              <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
+                <div class="flex justify-between mb-1">
+                  <label class="text-slate-300">จำนวนกล้วยต่อการกด 1 ครั้ง</label>
+                  <span id="valBananaCount" class="font-mono font-bold text-yellow-400">2 ลูก/ครั้ง</span>
+                </div>
+                <input id="paramBananaCount" type="range" min="1" max="3" step="1" value="2" oninput="updateEngineeringParams()" class="w-full" />
+              </div>
+            </div>
+
+            <!-- 4. Banana Ripeness Selector -->
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <span class="text-slate-300 font-medium">ความสุกของกล้วยน้ำว้า:</span>
+              <div class="flex gap-1.5">
+                <button onclick="setRipeness('firm')" id="ripeBtn-firm" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition">
+                  🟢 ห่าม (เนื้อแน่น)
+                </button>
+                <button onclick="setRipeness('optimal')" id="ripeBtn-optimal" class="px-2.5 py-1 rounded-lg border border-yellow-400 bg-yellow-400/15 text-yellow-300 font-semibold transition">
+                  🟡 สุกพอดี (มาตรฐาน)
+                </button>
+                <button onclick="setRipeness('soft')" id="ripeBtn-soft" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition">
+                  🟠 งอม (นิ่มพิเศษ)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Engineering Analyzer Panel (Gemini API + Instant Simulation Diagnostics) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sm">🤖</span>
+                <div>
+                  <h2 class="text-sm font-bold text-white">AI Engineering Analyzer (วิเคราะห์วิศวกรรมด้วย AI)</h2>
+                  <p class="text-[11px] text-slate-400">ประเมินผลจากค่าพารามิเตอร์ที่ตั้งไว้ในเครื่อง KluayPress แบบ Real-time</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Gemini 3 Flash</span>
+            </div>
+
+            <!-- Preset Engineering Analysis Buttons -->
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <button onclick="runAiAnalysis('mechanics')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-sky-500/40 text-left transition group">
+                <div class="text-xs font-bold text-sky-400 group-hover:text-sky-300 flex items-center gap-1.5">
+                  <span>⚙️</span> <span>1. วิเคราะห์กลศาสตร์ & วัสดุ</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">คำนวณแรงกด คานทดแรง สปริง และ Safety Factor (Shigley)</p>
+              </button>
+
+              <button onclick="runAiAnalysis('quality')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-yellow-500/40 text-left transition group">
+                <div class="text-xs font-bold text-yellow-400 group-hover:text-yellow-300 flex items-center gap-1.5">
+                  <span>🍌</span> <span>2. วิเคราะห์คุณภาพ & ลดของเสีย</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">ตรวจสอบความหนาแหวนรองกับความสุกกล้วยเพื่อมาตรฐานแฟรนไชส์</p>
+              </button>
+
+              <button onclick="runAiAnalysis('ergonomics')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-500/40 text-left transition group">
+                <div class="text-xs font-bold text-emerald-400 group-hover:text-emerald-300 flex items-center gap-1.5">
+                  <span>🦵</span> <span>3. การยศาสตร์ & กำลังการผลิต</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">ประเมินความล้าตามเกณฑ์ NIOSH/OSHA และรอบการผลิต +400%</p>
+              </button>
+
+              <button onclick="runAiAnalysis('smart_ai')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-purple-500/40 text-left transition group">
+                <div class="text-xs font-bold text-purple-400 group-hover:text-purple-300 flex items-center gap-1.5">
+                  <span>📡</span> <span>4. ออกแบบเซนเซอร์ & AI ต่อยอด</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">แนะนำการติด Load Cell, Linear Sensor และ AI Vision QC</p>
+              </button>
+            </div>
+
+            <!-- Custom Prompt Input -->
+            <div class="flex gap-2 mb-3">
+              <input id="customAiInput" type="text" placeholder="ถาม AI วิศวกร เช่น ถ้าต้องการทับเผือกหรือมันต้องปรับแหวนรองและสปริงอย่างไร?" 
+                onkeydown="if(event.key==='Enter') runAiAnalysis('custom')"
+                class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-400" />
+              <button onclick="runAiAnalysis('custom')" id="btnAskAi" class="px-3.5 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs transition whitespace-nowrap">
+                วิเคราะห์ด้วย AI
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Output Box -->
+          <div id="aiResponseBox" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs leading-relaxed text-slate-200 max-h-[290px] overflow-y-auto space-y-2">
+            <!-- Populated dynamically on load & on click -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: 3-STEP WORKING PRINCIPLE DIAGRAM (วาง -> เหยียบ -> คลาย) ==================== -->
+    <section id="tab-sequence" class="hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-wider text-yellow-400 bg-yellow-400/10 px-2.5 py-1 rounded-md border border-yellow-400/20">Engineering Sequence Blueprint</span>
+            <h2 class="text-xl md:text-2xl font-bold text-white mt-2">หลักการทำงานของเครื่อง KluayPress (วาง ➔ เหยียบ ➔ คลาย)</h2>
+            <p class="text-xs text-slate-400 mt-1">จำลองลำดับการเคลื่อนที่ของกลไกตามแบบวิศวกรรมต้นฉบับของทีม ตึง ตึง โป๊ะ มหาวิทยาลัยทักษิณ</p>
+          </div>
+          <button onclick="switchMainTab('simulator')" class="px-4 py-2 rounded-xl bg-yellow-400 text-slate-950 font-bold text-xs hover:bg-yellow-300 transition">
+            ⚡ เปิดโหมดจำลองการเหยียบแบบโต้ตอบ (Interactive Simulator)
+          </button>
+        </div>
+
+        <!-- 3-Step Visual Diagram matching 48.KruyPress.png -->
+        <div class="cad-light-grid text-slate-900 rounded-2xl p-6 border-2 border-slate-700 shadow-inner">
+          <div class="grid grid-cols-1 lg:grid-cols-11 gap-4 items-center">
+
+            <!-- STAGE 1: วาง -->
+            <div class="lg:col-span-3 bg-white/90 backdrop-blur rounded-2xl p-4 border border-slate-300 shadow-md flex flex-col items-center">
+              <div class="w-full flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded bg-blue-700 text-white">ขั้นตอนที่ 1</span>
+                <span class="text-xs font-mono text-slate-500">STATE: OPEN</span>
+              </div>
+              <svg viewBox="0 0 230 280" class="w-full max-w-[210px] h-auto">
+                <!-- Frame -->
+                <rect x="30" y="120" width="12" height="145" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="145" y="120" width="12" height="145" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="30" y="116" width="127" height="7" fill="#5E6C84" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="42" y="218" width="103" height="10" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Prep shelf -->
+                <rect x="5" y="122" width="25" height="5" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <line x1="15" y1="127" x2="30" y2="148" stroke="#5E6C84" stroke-width="3"/>
+                <rect x="12" y="96" width="5" height="26" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <!-- Main Shaft & Top Arm -->
+                <rect x="144" y="25" width="14" height="92" fill="#97A0AF" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="92" y="32" width="54" height="12" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="30" y="44" width="108" height="6" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Anti-rotation guide rod -->
+                <rect x="40" y="12" width="6" height="68" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <!-- Washers on shaft -->
+                <rect x="142" y="106" width="18" height="10" fill="#F59E0B" stroke="#78350F" stroke-width="1.2"/>
+                <circle cx="151" cy="110" r="12" fill="none" stroke="#64748B" stroke-width="1" stroke-dasharray="2,2"/>
+                <!-- Bananas with Red Downward Arrows (วาง) -->
+                <rect x="42" y="94" width="34" height="22" rx="9" fill="#FDE047" stroke="#CA8A04" stroke-width="1.5"/>
+                <rect x="102" y="94" width="34" height="22" rx="9" fill="#FDE047" stroke="#CA8A04" stroke-width="1.5"/>
+                <path d="M52,98 L52,112 M49,108 L52,113 L55,108" stroke="#DC2626" stroke-width="1.8" fill="none"/>
+                <path d="M66,98 L66,112 M63,108 L66,113 L69,108" stroke="#DC2626" stroke-width="1.8" fill="none"/>
+                <path d="M112,98 L112,112 M109,108 L112,113 L115,108" stroke="#DC2626" stroke-width="1.8" fill="none"/>
+                <path d="M126,98 L126,112 M123,108 L126,113 L129,108" stroke="#DC2626" stroke-width="1.8" fill="none"/>
+                <!-- Upper Pressing Plate (High position) -->
+                <rect x="30" y="72" width="114" height="8" fill="#97A0AF" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Spring (Unstretched) -->
+                <path d="M88,50 L85,54 L91,58 L85,62 L91,66 L88,72" stroke="#1E293B" stroke-width="2" fill="none"/>
+                <!-- Vertical Linkage & High Pedal -->
+                <rect x="82" y="70" width="12" height="122" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <line x1="88" y1="192" x2="88" y2="230" stroke="#1E293B" stroke-width="3"/>
+                <line x1="142" y1="246" x2="22" y2="210" stroke="#5E6C84" stroke-width="5" stroke-linecap="round"/>
+                <circle cx="142" cy="246" r="4" fill="#1E293B"/>
+              </svg>
+              <h3 class="text-2xl font-extrabold text-blue-700 mt-2">วาง</h3>
+              <p class="text-xs text-slate-600 text-center mt-1">วางกล้วยบนแผ่นอะคริลิคเกรดอาหาร แผ่นกดด้านบนยกตัวเปิดค้างไว้ด้วยแรงสปริง</p>
+              <button onclick="switchMainTab('simulator'); setStepState(1);" class="mt-3 w-full py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition">จำลองขั้นตอนนี้</button>
+            </div>
+
+            <!-- Arrow 1 -->
+            <div class="lg:col-span-1 flex justify-center">
+              <div class="w-12 h-12 rounded-full bg-blue-900 text-white flex items-center justify-center text-2xl font-bold shadow-lg">➔</div>
+            </div>
+
+            <!-- STAGE 2: เหยียบ -->
+            <div class="lg:col-span-3 bg-white/90 backdrop-blur rounded-2xl p-4 border-2 border-blue-600 shadow-lg flex flex-col items-center">
+              <div class="w-full flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded bg-blue-700 text-white">ขั้นตอนที่ 2</span>
+                <span class="text-xs font-mono text-amber-600 font-bold">STOP CONTACT</span>
+              </div>
+              <svg viewBox="0 0 230 280" class="w-full max-w-[210px] h-auto">
+                <!-- Frame -->
+                <rect x="30" y="120" width="12" height="145" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="145" y="120" width="12" height="145" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="30" y="116" width="127" height="7" fill="#5E6C84" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="42" y="218" width="103" height="10" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Prep shelf -->
+                <rect x="5" y="122" width="25" height="5" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <line x1="15" y1="127" x2="30" y2="148" stroke="#5E6C84" stroke-width="3"/>
+                <rect x="12" y="96" width="5" height="26" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <!-- Main Shaft & Top Arm -->
+                <rect x="144" y="25" width="14" height="92" fill="#97A0AF" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="92" y="32" width="54" height="12" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="30" y="44" width="108" height="6" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Anti-rotation guide rod -->
+                <rect x="40" y="34" width="6" height="68" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <!-- Washers on shaft -->
+                <rect x="142" y="106" width="18" height="10" fill="#F59E0B" stroke="#78350F" stroke-width="1.2"/>
+                <circle cx="151" cy="110" r="12" fill="none" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="2,2"/>
+                <!-- Flattened Bananas -->
+                <rect x="36" y="108" width="48" height="8" rx="4" fill="#FACC15" stroke="#CA8A04" stroke-width="1.5"/>
+                <rect x="96" y="108" width="48" height="8" rx="4" fill="#FACC15" stroke="#CA8A04" stroke-width="1.5"/>
+                <!-- Upper Pressing Plate (Pressed Down to Washers) -->
+                <rect x="30" y="98" width="114" height="10" fill="#97A0AF" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Spring (Stretched in tension) -->
+                <path d="M88,50 L85,58 L91,66 L85,74 L91,82 L85,90 L88,98" stroke="#1E293B" stroke-width="2" fill="none"/>
+                <!-- Vertical Linkage & Depressed Pedal -->
+                <rect x="82" y="96" width="12" height="122" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <line x1="88" y1="218" x2="88" y2="250" stroke="#1E293B" stroke-width="3"/>
+                <line x1="142" y1="246" x2="18" y2="254" stroke="#5E6C84" stroke-width="5" stroke-linecap="round"/>
+                <circle cx="142" cy="246" r="4" fill="#1E293B"/>
+              </svg>
+              <h3 class="text-2xl font-extrabold text-blue-700 mt-2">เหยียบ</h3>
+              <p class="text-xs text-slate-600 text-center mt-1">เหยียบแป้นลง ขาเชื่อมต่อดึงแผ่นทับลงมาชนแหวนรองปรับความหนา สปริงด้านบนถูกดึงยืดออก</p>
+              <button onclick="switchMainTab('simulator'); setStepState(2);" class="mt-3 w-full py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition">จำลองขั้นตอนนี้</button>
+            </div>
+
+            <!-- Arrow 2 -->
+            <div class="lg:col-span-1 flex justify-center">
+              <div class="w-12 h-12 rounded-full bg-blue-900 text-white flex items-center justify-center text-2xl font-bold shadow-lg">➔</div>
+            </div>
+
+            <!-- STAGE 3: คลาย -->
+            <div class="lg:col-span-3 bg-white/90 backdrop-blur rounded-2xl p-4 border border-slate-300 shadow-md flex flex-col items-center">
+              <div class="w-full flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded bg-blue-700 text-white">ขั้นตอนที่ 3</span>
+                <span class="text-xs font-mono text-emerald-600 font-bold">AUTO RETURN</span>
+              </div>
+              <svg viewBox="0 0 230 280" class="w-full max-w-[210px] h-auto">
+                <!-- Frame -->
+                <rect x="30" y="120" width="12" height="145" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="145" y="120" width="12" height="145" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="30" y="116" width="127" height="7" fill="#5E6C84" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="42" y="218" width="103" height="10" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Prep shelf -->
+                <rect x="5" y="122" width="25" height="5" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <line x1="15" y1="127" x2="30" y2="148" stroke="#5E6C84" stroke-width="3"/>
+                <rect x="12" y="96" width="5" height="26" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <!-- Main Shaft & Top Arm -->
+                <rect x="144" y="25" width="14" height="92" fill="#97A0AF" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="92" y="32" width="54" height="12" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <rect x="30" y="44" width="108" height="6" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Anti-rotation guide rod -->
+                <rect x="40" y="12" width="6" height="68" fill="#7A869A" stroke="#1E293B" stroke-width="1.2"/>
+                <!-- Washers on shaft -->
+                <rect x="142" y="106" width="18" height="10" fill="#F59E0B" stroke="#78350F" stroke-width="1.2"/>
+                <!-- Flattened Bananas Ready on Lower Plate -->
+                <rect x="36" y="108" width="48" height="8" rx="4" fill="#FACC15" stroke="#CA8A04" stroke-width="1.5"/>
+                <rect x="96" y="108" width="48" height="8" rx="4" fill="#FACC15" stroke="#CA8A04" stroke-width="1.5"/>
+                <!-- Red Upward Return Arrows (คลาย) -->
+                <path d="M52,104 L52,83 M48,88 L52,82 L56,88" stroke="#DC2626" stroke-width="2" fill="none"/>
+                <path d="M68,104 L68,83 M64,88 L68,82 L72,88" stroke="#DC2626" stroke-width="2" fill="none"/>
+                <path d="M112,104 L112,83 M108,88 L112,82 L116,88" stroke="#DC2626" stroke-width="2" fill="none"/>
+                <path d="M126,104 L126,83 M122,88 L126,82 L130,88" stroke="#DC2626" stroke-width="2" fill="none"/>
+                <!-- Upper Pressing Plate (Returned to Top) -->
+                <rect x="30" y="72" width="114" height="8" fill="#97A0AF" stroke="#1E293B" stroke-width="1.5"/>
+                <!-- Spring (Contracted) -->
+                <path d="M88,50 L85,54 L91,58 L85,62 L91,66 L88,72" stroke="#1E293B" stroke-width="2" fill="none"/>
+                <!-- Vertical Linkage & Returned Pedal -->
+                <rect x="82" y="70" width="12" height="122" fill="#7A869A" stroke="#1E293B" stroke-width="1.5"/>
+                <line x1="88" y1="192" x2="88" y2="230" stroke="#1E293B" stroke-width="3"/>
+                <line x1="142" y1="246" x2="22" y2="210" stroke="#5E6C84" stroke-width="5" stroke-linecap="round"/>
+                <circle cx="142" cy="246" r="4" fill="#1E293B"/>
+              </svg>
+              <h3 class="text-2xl font-extrabold text-blue-700 mt-2">คลาย</h3>
+              <p class="text-xs text-slate-600 text-center mt-1">เมื่อถอนเท้าออก สปริงดึงกลับจะยกแผ่นกดและแป้นเหยียบขึ้นสู่ตำแหน่งเริ่มต้นอัตโนมัติ</p>
+              <button onclick="switchMainTab('simulator'); setStepState(3);" class="mt-3 w-full py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition">จำลองขั้นตอนนี้</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: COMPARISON MATRIX & BOM COST CALCULATOR ==================== -->
+    <section id="tab-business" class="hidden space-y-6">
+      <!-- Comparison Table (Page 6 of PDF) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white">ตารางเปรียบเทียบประสิทธิภาพเครื่องทับกล้วย (Banana Press Comparison)</h2>
+            <p class="text-xs text-slate-400">อ้างอิงการประเมินตามหลักการยศาสตร์ (NIOSH/OSHA) และกลไกกำหนดระยะหยุด (Mechanical Stop)</p>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/15 text-yellow-300 border border-yellow-400/30">กำลังการผลิตเพิ่มขึ้นสูงสุด 400%</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 bg-slate-950/60">
+                <th class="p-3 font-semibold">เกณฑ์การเปรียบเทียบ</th>
+                <th class="p-3 font-semibold">ที่ทับกล้วยไม้แบบดั้งเดิม</th>
+                <th class="p-3 font-semibold">เครื่องทับแบบคันโยกมือ</th>
+                <th class="p-3 font-semibold">เครื่องทับระบบนิวเมติกส์</th>
+                <th class="p-3 font-bold text-yellow-400 bg-yellow-400/10 border-x border-yellow-400/30">⭐ KluayPress (TSU)</th>
+                <th class="p-3 font-semibold text-emerald-400">ประโยชน์ที่ได้รับจาก KluayPress</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/80">
+              <tr>
+                <td class="p-3 font-medium text-slate-300">กลไกการออกแรง</td>
+                <td class="p-3 text-slate-400">แขน ข้อมือ และหัวไหล่</td>
+                <td class="p-3 text-slate-400">แขน ข้อมือ และหัวไหล่</td>
+                <td class="p-3 text-slate-400">กดปุ่ม (ปั๊มลมไฟฟ้า)</td>
+                <td class="p-3 font-bold text-white bg-yellow-400/5 border-x border-yellow-400/20">เท้าเหยียบ (กล้ามเนื้อมัดใหญ่)</td>
+                <td class="p-3 text-emerald-400">ลดอาการบาดเจ็บปวดเมื่อย (RSI)</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-slate-300">การใช้พลังงานไฟฟ้า</td>
+                <td class="p-3 text-slate-400">ไม่ใช้</td>
+                <td class="p-3 text-slate-400">ไม่ใช้</td>
+                <td class="p-3 text-rose-400">ใช้ไฟฟ้า (ปั๊มลม)</td>
+                <td class="p-3 font-bold text-white bg-yellow-400/5 border-x border-yellow-400/20">ไม่ใช้ไฟฟ้า 100%</td>
+                <td class="p-3 text-emerald-400">ประหยัดค่าไฟ ใช้ได้ทุกพื้นที่</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-slate-300">การควบคุมความหนา</td>
+                <td class="p-3 text-rose-400">ไม่มี (กะน้ำหนักมือเอง)</td>
+                <td class="p-3 text-slate-400">1 ระดับ</td>
+                <td class="p-3 text-slate-400">1 ระดับ</td>
+                <td class="p-3 font-bold text-yellow-300 bg-yellow-400/5 border-x border-yellow-400/20">ปรับได้หลายระดับ (แหวนรอง)</td>
+                <td class="p-3 text-emerald-400">มีความยืดหยุ่น รองรับหลายเมนู</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-slate-300">เวลาทำงานต่อเนื่องก่อนล้า</td>
+                <td class="p-3 text-rose-400">0.30 - 1 ชั่วโมง</td>
+                <td class="p-3 text-slate-400">1 - 1.30 ชั่วโมง</td>
+                <td class="p-3 text-slate-300">6 - 8 ชั่วโมง</td>
+                <td class="p-3 font-bold text-white bg-yellow-400/5 border-x border-yellow-400/20">4 - 6 ชั่วโมง</td>
+                <td class="p-3 text-emerald-400">ทำงานได้ต่อเนื่องตามหลัก Ergonomics</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-slate-300">ความคลาดเคลื่อนของความหนา</td>
+                <td class="p-3 text-rose-400">± 20 - 40%</td>
+                <td class="p-3 text-amber-400">± 10 - 20%</td>
+                <td class="p-3 text-emerald-400">± 0 - 5%</td>
+                <td class="p-3 font-bold text-emerald-400 bg-yellow-400/5 border-x border-yellow-400/20">± 0 - 5% (Mechanical Stop)</td>
+                <td class="p-3 text-emerald-400">สุกพร้อมกันในตู้อบ ลดของเสีย</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-slate-300">กำลังการผลิต (ชิ้น/นาที)</td>
+                <td class="p-3 text-slate-400">3 - 4 ชิ้น/นาที</td>
+                <td class="p-3 text-slate-400">8 - 10 ชิ้น/นาที</td>
+                <td class="p-3 text-slate-400">8 - 10 ชิ้น/นาที</td>
+                <td class="p-3 font-bold text-yellow-400 bg-yellow-400/5 border-x border-yellow-400/20">16 - 20 ชิ้น/นาที</td>
+                <td class="p-3 text-emerald-400">เพิ่มกำลังการผลิต > 200% - 400%</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-slate-300">ราคาจำหน่าย (บาท)</td>
+                <td class="p-3 font-mono text-slate-400">199 ฿</td>
+                <td class="p-3 font-mono text-slate-400">1,290 ฿</td>
+                <td class="p-3 font-mono text-rose-400">28,000 ฿</td>
+                <td class="p-3 font-mono font-bold text-yellow-400 bg-yellow-400/10 border-x border-yellow-400/30 text-sm">8,950 ฿</td>
+                <td class="p-3 text-emerald-400">ผ่อน 0% 3 เดือน (3,000/3,000/2,950)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOM Cost Structure & ROI Calculator (Page 10 of PDF) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <h3 class="text-base font-bold text-white mb-3">โครงสร้างต้นทุนการผลิตต่อหน่วย (Bill of Materials - BOM)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">เหล็กเพลากลม (1 หุน และ 2 นิ้ว)</span>
+              <span class="font-mono font-bold text-white">1,450 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">แผ่นอะคริลิก Food Grade (ตัด CNC)</span>
+              <span class="font-mono font-bold text-sky-400">760 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">เหล็กแผ่นเรียบ</span>
+              <span class="font-mono font-bold text-white">520 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">เหล็กกล่องสี่เหลี่ยมจัตุรัส</span>
+              <span class="font-mono font-bold text-white">500 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">ท่อเหล็กกลมคาร์บอน</span>
+              <span class="font-mono font-bold text-white">290 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">สปริงสเตนเลส</span>
+              <span class="font-mono font-bold text-white">200 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">สีสเปรย์รองพื้นกันสนิม + จาระบี Food Grade</span>
+              <span class="font-mono font-bold text-white">250 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+              <span class="text-slate-300">เหล็กแบนตัด + สลัก + สกรูและน็อต</span>
+              <span class="font-mono font-bold text-white">200 ฿</span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800 sm:col-span-2">
+              <span class="text-slate-300">ค่าแรงช่างและค่าดำเนินการประกอบ</span>
+              <span class="font-mono font-bold text-white">1,000 ฿</span>
+            </div>
+          </div>
+          <div class="mt-4 p-3.5 rounded-xl bg-yellow-400/10 border border-yellow-400/30 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-xs text-slate-300">ต้นทุนรวมต่อหน่วย (Total BOM Cost):</span>
+              <span class="text-lg font-mono font-bold text-white ml-2">5,170 บาท</span>
+            </div>
+            <div>
+              <span class="text-xs text-slate-300">ราคาขาย:</span>
+              <span class="text-lg font-mono font-bold text-yellow-400 ml-1">8,950 บาท</span>
+              <span class="text-xs font-mono text-emerald-400 ml-2">(กำไรสุทธิ 3,780 ฿ / 73%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer ROI Calculator -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+          <div>
+            <h3 class="text-base font-bold text-white mb-1">คำนวณจุดคุ้มทุนสำหรับร้านค้า (Customer ROI Simulator)</h3>
+            <p class="text-xs text-slate-400 mb-4">ประเมินระยะเวลาคืนทุนเมื่อเปลี่ยนจากไม้ทับกล้วยดั้งเดิมมาใช้ KluayPress</p>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span>จำนวนชั่วโมงทำกล้วยทับต่อวัน:</span>
+                  <span id="roiHoursVal" class="font-mono font-bold text-yellow-400">3 ชั่วโมง/วัน</span>
+                </div>
+                <input id="roiHoursInput" type="range" min="1" max="6" step="0.5" value="3" oninput="updateRoiCalc()" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span>กำไรต่อกล่อง (กล้วยอบธัญพืชติดหนึบ 35 ฿):</span>
+                  <span id="roiProfitVal" class="font-mono font-bold text-emerald-400">15 บาท/กล่อง</span>
+                </div>
+                <input id="roiProfitInput" type="range" min="8" max="25" step="1" value="15" oninput="updateRoiCalc()" class="w-full" />
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2.5 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-400">ผลผลิตที่เพิ่มขึ้นต่อวัน:</span>
+              <span id="roiExtraBoxes" class="font-mono font-bold text-white">+45 กล่อง/วัน</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">ของเสียที่ลดลงจากการคุมความหนา:</span>
+              <span class="font-mono font-bold text-emerald-400">ลดลง ~15-20%</span>
+            </div>
+            <div class="flex justify-between border-t border-slate-800 pt-2">
+              <span class="text-slate-300 font-semibold">ระยะเวลาคืนทุนค่าเครื่อง (8,950 ฿):</span>
+              <span id="roiPaybackDays" class="font-mono font-bold text-lg text-yellow-400">~13 วัน</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-3 px-4 mt-6 text-center text-[11px] text-slate-500">
+    KluayPress (เครื่องกดขึ้นรูปกล้วยแบบเท้าเหยียบควบคุมความหนา) • พัฒนาโดย ทีม ตึง ตึง โป๊ะ (นายธีระพงษ์ คงศรี, นายจักรกฤษณ์ นิลคง, นายธนกฤต แก้วท่าพยา) คณะวิศวกรรมศาสตร์ มหาวิทยาลัยทักษิณ (TSU)
+  </footer>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // --- 1. STATE & ENGINEERING PARAMETERS ---
+    const state = {
+      pedalPercent: 0,       // 0 to 100%
+      targetPedalPercent: 0, // Target for smooth animation
+      currentStep: 1,        // 1: วาง, 2: เหยียบ, 3: คลาย
+      isHoldingPedal: false,
+      autoCycle: false,
+      autoPhase: 0,
+      showCallouts: true,
+      lightCanvas: false,
+
+      // Engineering parameters
+      washerMm: 5.0,         // 2.0 to 12.0 mm
+      footForceN: 140,       // 60 to 300 N
+      leverRatio: 3.0,       // 2.0 to 4.5
+      springK: 1200,         // 600 to 2400 N/m
+      bananaCount: 2,        // 1 to 3 pieces per press
+      ripeness: 'optimal',   // 'firm', 'optimal', 'soft'
+      initialBananaMm: 28.0  // Raw peeled banana thickness (mm)
+    };
+
+    // Detailed Engineering Component Dictionary (from Page 5 of PDF)
+    const partDescriptions = {
+      shaftCap: {
+        title: "1. ฝาปิดแกน (Shaft Cap)",
+        desc: "ปิดหัวแกนเหล็กกลมด้านบนสุด ป้องกันฝุ่นละอองและสิ่งสกปรกเข้าสู่จุดหมุนและร่องเพลา และช่วยล็อกตำแหน่งชุดยึดด้านบนให้มั่นคง"
+      },
+      springBracket: {
+        title: "2. ตัวปรับเลื่อนตัวยึดสปริง & แผ่นยึดสปริง (Spring Bracket Adjuster)",
+        desc: "ใช้ปรับความตึงเริ่มต้น (Pre-tension) ของสปริงสเตนเลส เพื่อให้แรงดึงกลับเหมาะสมกับน้ำหนักชุดแผ่นกดและความถี่ในการเหยียบของผู้ใช้งาน"
+      },
+      returnSpring: {
+        title: "3. สปริงสเตนเลส (Stainless Return Spring - กลไกคืนกลับ)",
+        desc: "เกรดสเตนเลสไม่เป็นสนิม ทำหน้าที่เก็บพลังงานศักย์ยืดหยุ่นเมื่อเหยียบแป้นลง และดึงชุดแผ่นทับกล้วยพร้อมแป้นเหยียบกลับสู่ตำแหน่งเดิมอัตโนมัติ (ลด Cycle Time)"
+      },
+      antiRotation: {
+        title: "4. กระบอกเลื่อนล็อคแกนไม่ให้เกิดการหมุน (Anti-Rotation Guide Sleeve)",
+        desc: "ประคองแผ่นกดขึ้น-ลงในแนวดิ่งอย่างแม่นยำ ป้องกันไม่ให้แผ่นอะคริลิคบิดหรือหมุนตัวขณะรับแรงกดทับ ทำให้ความหนากล้วยสม่ำเสมอทั่วทั้งแผ่น"
+      },
+      upperPlate: {
+        title: "5. แผ่นสแตนเลส & แผ่นอะคริลิคทับกล้วย (Food-Grade Upper Pressing Plate)",
+        desc: "ด้านบนเสริมแผ่นสแตนเลสเพื่อกระจายแรงกดไม่ให้โก่งตัว (ตามหลัก Mechanics of Materials) ด้านล่างประกบแผ่นอะคริลิคใส Food Grade สัมผัสอาหารปลอดภัย ทำความสะอาดง่าย"
+      },
+      lowerPlate: {
+        title: "6. แผ่นอะคริลิควางกล้วย (Food-Grade Lower Base Plate)",
+        desc: "พื้นที่วางกล้วยขนาดกว้าง สามารถวางกล้วยได้ 1-3 ลูกต่อการกด 1 ครั้ง ไม่ดูดซับความชื้นและไม่ขึ้นราเหมือนไม้ทับกล้วยแบบดั้งเดิม"
+      },
+      washers: {
+        title: "7. แหวนรองปรับแต่งความหนา (Thickness Adjustment Washers / Mechanical Stop)",
+        desc: "หัวใจสำคัญของการควบคุมคุณภาพ! ทำหน้าที่เป็น Mechanical Stop หยุดแผ่นกดที่ความหนาเป้าหมายอย่างแม่นยำ (คลาดเคลื่อนเพียง ±0-5%) ทำให้กล้วยสุกพร้อมกันทุกชิ้นในตู้อบ"
+      },
+      linkageBar: {
+        title: "8. ขาเชื่อมต่อแป้นเหยียบ & ข้อต่อแป้นเหยียบ (Pedal Linkage Rod & Joint)",
+        desc: "ถ่ายทอดแรงดึงแนวดิ่งจากคานแป้นเหยียบมายังแผ่นกดด้านบน ออกแบบลดน้ำหนักชิ้นส่วนขับเคลื่อนเพื่อลดแรงเฉื่อยขณะทำงานต่อเนื่อง"
+      },
+      footPedal: {
+        title: "9. แป้นเหยียบตามหลักการยศาสตร์ (Ergonomic Foot Pedal)",
+        desc: "เปลี่ยนจากการใช้กล้ามเนื้อมัดเล็ก (ข้อมือ/แขน/ไหล่) มาใช้กล้ามเนื้อขามัดใหญ่ร่วมกับคานทดแรง ทำให้ทำงานต่อเนื่องได้นาน 4-6 ชั่วโมงโดยไม่ปวดหลังหรือข้อมือ"
+      }
+    };
+
+    // --- 2. KINEMATIC & PHYSICS ENGINE ---
+    function calculatePhysics() {
+      // Max possible stroke when washerMm = 2mm is 26mm (from 28mm down to 2mm)
+      const maxAllowedStrokeMm = Math.max(0, state.initialBananaMm - state.washerMm);
+      // Current stroke in mm based on pedalPercent (0 to 100%)
+      const currentStrokeMm = (state.pedalPercent / 100) * maxAllowedStrokeMm;
+      const currentBananaThickMm = Math.max(state.washerMm, state.initialBananaMm - currentStrokeMm);
+
+      // Spring extension in meters (assume 1mm banana stroke = 1.4mm physical visual spring stretch)
+      const springStretchM = (currentStrokeMm * 1.4) / 1000;
+      const springPreloadN = 15;
+      const springForceN = Math.round(springPreloadN + state.springK * springStretchM);
+
+      // Gross downward pull force from foot pedal lever
+      const grossPullForceN = state.footForceN * state.leverRatio;
+      const netPressForceN = Math.max(0, Math.round(grossPullForceN - springForceN));
+
+      // Minimum required force based on ripeness & number of bananas
+      const ripenessFactor = state.ripeness === 'firm' ? 145 : (state.ripeness === 'optimal' ? 95 : 55);
+      const requiredForceN = ripenessFactor * state.bananaCount;
+
+      // Return time estimation (faster with higher springK)
+      const returnTimeSec = Math.max(0.18, (0.48 - (state.springK - 600) * 0.00014)).toFixed(2);
+
+      // Cycle time & throughput (pieces/min)
+      const cycleTimeSec = 2.8 + parseFloat(returnTimeSec);
+      const throughputPerMin = Math.round((60 / cycleTimeSec) * state.bananaCount);
+
+      return {
+        maxAllowedStrokeMm,
+        currentStrokeMm,
+        currentBananaThickMm,
+        springForceN,
+        netPressForceN,
+        requiredForceN,
+        returnTimeSec,
+        throughputPerMin,
+        isStopContact: state.pedalPercent >= 98
+      };
+    }
+
+    function renderSimulation() {
+      const phys = calculatePhysics();
+
+      // Convert currentStrokeMm to SVG pixel displacement (max ~34px downward travel)
+      const maxTravelPx = 34;
+      const stopLimitFactor = (state.initialBananaMm - state.washerMm) / 26.0;
+      const travelPx = (state.pedalPercent / 100) * (maxTravelPx * stopLimitFactor);
+
+      // 1. Move Side View Upper Assembly
+      const sideMovingGroup = document.getElementById('sideMovingGroup');
+      sideMovingGroup.setAttribute('transform', `translate(0, ${travelPx.toFixed(1)})`);
+
+      // 2. Move Isometric View Upper Assembly
+      const isoMovingGroup = document.getElementById('isoMovingGroup');
+      isoMovingGroup.setAttribute('transform', `translate(0, ${(travelPx * 0.85).toFixed(1)})`);
+
+      // 3. Move Anti-Rotation Rod in Side View
+      const antiRotationRod = document.getElementById('antiRotationRod');
+      antiRotationRod.setAttribute('y', (20 + travelPx).toFixed(1));
+
+      // 4. Update Dynamic Return Spring Coils (stretches from y=77 down to 115 + travelPx)
+      const springTopY = 77;
+      const springBotY = 115 + travelPx;
+      const coils = 6;
+      const stepY = (springBotY - springTopY) / coils;
+      let d = `M214,${springTopY} `;
+      for (let i = 0; i < coils; i++) {
+        const y1 = springTopY + stepY * (i + 0.25);
+        const y2 = springTopY + stepY * (i + 0.75);
+        const y3 = springTopY + stepY * (i + 1.0);
+        d += `L208,${y1.toFixed(1)} L220,${y2.toFixed(1)} L214,${y3.toFixed(1)} `;
+      }
+      document.getElementById('returnSpringPath').setAttribute('d', d);
+
+      // 5. Update Washer Stack Height Visually
+      const washerPxHeight = Math.max(4, (state.washerMm / 12) * 20);
+      const washerY = 168 - washerPxHeight;
+      const sideWasherStack = document.getElementById('sideWasherStack');
+      sideWasherStack.setAttribute('y', washerY.toFixed(1));
+      sideWasherStack.setAttribute('height', washerPxHeight.toFixed(1));
+
+      // Update Zoomed Inset Washers & Top Sleeve
+      const zoomWasherH = Math.max(6, (state.washerMm / 12) * 28);
+      const zoomWasherY = 70 - zoomWasherH;
+      document.getElementById('zoomWasherStack').setAttribute('y', zoomWasherY.toFixed(1));
+      document.getElementById('zoomWasherStack').setAttribute('height', zoomWasherH.toFixed(1));
+
+      const zoomSleeveMaxTravel = zoomWasherY - 40;
+      const zoomSleeveY = 24 + (state.pedalPercent / 100) * zoomSleeveMaxTravel;
+      document.getElementById('zoomTopSleeve').setAttribute('y', zoomSleeveY.toFixed(1));
+      document.getElementById('zoomWasherText').textContent = `แหวนรอง: ${state.washerMm.toFixed(1)} mm`;
+
+      // 6. Compress Bananas in Side View & Isometric View
+      // Upper plate bottom edge is at y = 128 + travelPx. Lower plate top is at y = 174.
+      const plateGapPx = Math.max(5, 174 - (128 + travelPx));
+      const bananaH = Math.min(28, plateGapPx);
+      const bananaY = 174 - bananaH;
+      // Banana widens as it flattens (conservation of volume)
+      const compressionRatio = (28 - bananaH) / 22;
+      const bananaW = 44 + compressionRatio * 20;
+
+      const sideBananaLeft = document.getElementById('sideBananaLeft');
+      const sideBananaRight = document.getElementById('sideBananaRight');
+
+      sideBananaLeft.setAttribute('y', bananaY.toFixed(1));
+      sideBananaLeft.setAttribute('height', bananaH.toFixed(1));
+      sideBananaLeft.setAttribute('width', bananaW.toFixed(1));
+      sideBananaLeft.setAttribute('x', (178 - bananaW / 2).toFixed(1));
+      sideBananaLeft.setAttribute('rx', Math.max(3, bananaH / 2).toFixed(1));
+
+      sideBananaRight.setAttribute('y', bananaY.toFixed(1));
+      sideBananaRight.setAttribute('height', bananaH.toFixed(1));
+      sideBananaRight.setAttribute('width', bananaW.toFixed(1));
+      sideBananaRight.setAttribute('x', (256 - bananaW / 2).toFixed(1));
+      sideBananaRight.setAttribute('rx', Math.max(3, bananaH / 2).toFixed(1));
+
+      // Isometric bananas widen when pressed
+      const isoRx = 22 + compressionRatio * 10;
+      const isoRy = 12 + compressionRatio * 5;
+      document.getElementById('isoBanana1').setAttribute('rx', isoRx.toFixed(1));
+      document.getElementById('isoBanana1').setAttribute('ry', isoRy.toFixed(1));
+      document.getElementById('isoBanana2').setAttribute('rx', isoRx.toFixed(1));
+      document.getElementById('isoBanana2').setAttribute('ry', isoRy.toFixed(1));
+
+      // 7. Rotate Foot Pedal Lever in Side View & Isometric View
+      // Pivot at (286, 396). Tip starts at (126, 342) and moves down to (126, 398)
+      const pedalTipY = 342 + travelPx * 1.65;
+      const pedalJointY = 372 + travelPx * 0.92;
+      document.getElementById('sidePedalBar').setAttribute('y2', pedalTipY.toFixed(1));
+      document.getElementById('sidePedalBarOutline').setAttribute('y2', pedalTipY.toFixed(1));
+      document.getElementById('sidePedalTip').setAttribute('cy', pedalTipY.toFixed(1));
+      document.getElementById('sidePedalJoint').setAttribute('cy', pedalJointY.toFixed(1));
+
+      // Isometric Pedal tilt
+      const isoPedalDrop = travelPx * 0.65;
+      document.getElementById('isoPedalPoly').setAttribute(
+        'points',
+        `95,${(348 + isoPedalDrop).toFixed(1)} 165,${(378 + isoPedalDrop).toFixed(1)} 228,348 158,320`
+      );
+
+      // 8. Show/Hide Step Arrows (วาง downward arrows vs คลาย upward arrows)
+      const step1Arrows = document.getElementById('step1Arrows');
+      const step3Arrows = document.getElementById('step3Arrows');
+      if (state.currentStep === 1 && state.pedalPercent < 20) {
+        step1Arrows.style.display = 'block';
+        step3Arrows.style.display = 'none';
+      } else if (state.currentStep === 3 && state.pedalPercent < 60) {
+        step1Arrows.style.display = 'none';
+        step3Arrows.style.display = 'block';
+      } else {
+        step1Arrows.style.display = 'none';
+        step3Arrows.style.display = 'none';
+      }
+
+      // 9. Update Telemetry Readouts & Status Badges
+      document.getElementById('readoutStroke').textContent = `${phys.currentStrokeMm.toFixed(1)} mm`;
+      document.getElementById('readoutBananaThick').textContent = `${phys.currentBananaThickMm.toFixed(1)} mm`;
+      document.getElementById('pedalSlider').value = Math.round(state.pedalPercent);
+      document.getElementById('pedalPercentText').textContent = `${Math.round(state.pedalPercent)}%`;
+
+      const stopBadge = document.getElementById('stopContactBadge');
+      const washerCircle = document.getElementById('washerZoomCircle');
+      if (phys.isStopContact) {
+        stopBadge.textContent = `Mechanical Stop: LOCKED AT ${state.washerMm.toFixed(1)} mm`;
+        stopBadge.className = 'text-xs font-mono text-emerald-400 font-bold';
+        washerCircle.setAttribute('stroke', '#10B981');
+        washerCircle.setAttribute('stroke-width', '2.5');
+      } else {
+        stopBadge.textContent = 'Mechanical Stop: OPEN';
+        stopBadge.className = 'text-xs font-mono text-slate-400';
+        washerCircle.setAttribute('stroke', '#FACC15');
+        washerCircle.setAttribute('stroke-width', '1.5');
+      }
+
+      // Update Bottom Telemetry Cards
+      document.getElementById('metricNetForce').textContent = `${phys.netPressForceN} N`;
+      document.getElementById('metricPressureNote').textContent =
+        phys.netPressForceN >= phys.requiredForceN
+          ? `แรงกดเพียงพอ (ต้องการ ≥ ${phys.requiredForceN} N)`
+          : `⚠️ แรงกดต่ำกว่าเกณฑ์ (ต้องการ ${phys.requiredForceN} N)`;
+      document.getElementById('metricPressureNote').className =
+        phys.netPressForceN >= phys.requiredForceN
+          ? 'text-[11px] text-emerald-400 mt-0.5'
+          : 'text-[11px] text-rose-400 mt-0.5 font-semibold';
+
+      document.getElementById('metricSpringForce').textContent = `${phys.springForceN} N`;
+      document.getElementById('metricReturnTime').textContent = `เวลาคืนกลับ: ${phys.returnTimeSec} วินาที`;
+      document.getElementById('metricFinalThickness').textContent = `${state.washerMm.toFixed(1)} mm`;
+      document.getElementById('metricThroughput').textContent = `${phys.throughputPerMin} ชิ้น/นาที`;
+
+      const qualityBadge = document.getElementById('metricQualityBadge');
+      if (state.ripeness === 'soft' && state.washerMm < 3.5) {
+        qualityBadge.textContent = '⚠️ ระวังกล้วยงอมเละ (ควรใช้แหวน ≥ 4 mm)';
+        qualityBadge.className = 'text-[11px] text-amber-400 mt-0.5';
+      } else {
+        qualityBadge.textContent = '✓ ความหนาสม่ำเสมอ (±0-5%)';
+        qualityBadge.className = 'text-[11px] text-emerald-300 mt-0.5';
+      }
+    }
+
+    // --- 3. ANIMATION LOOP FOR SMOOTH PEDAL KINEMATICS ---
+    function animationLoop() {
+      if (state.autoCycle) {
+        state.autoPhase += 0.028;
+        const cyclePos = state.autoPhase % 3.0;
+        if (cyclePos < 1.0) {
+          // Step 1: วาง
+          if (state.currentStep !== 1) highlightStepButtons(1);
+          state.targetPedalPercent = 0;
+        } else if (cyclePos < 2.0) {
+          // Step 2: เหยียบ
+          if (state.currentStep !== 2) highlightStepButtons(2);
+          state.targetPedalPercent = 100;
+        } else {
+          // Step 3: คลาย
+          if (state.currentStep !== 3) highlightStepButtons(3);
+          state.targetPedalPercent = 0;
+        }
+      } else if (state.isHoldingPedal) {
+        state.targetPedalPercent = 100;
+      }
+
+      // Smooth spring-damped interpolation toward targetPedalPercent
+      const diff = state.targetPedalPercent - state.pedalPercent;
+      if (Math.abs(diff) > 0.15) {
+        const speedFactor = state.targetPedalPercent > state.pedalPercent ? 0.18 : (0.12 + (state.springK / 15000));
+        state.pedalPercent += diff * speedFactor;
+        renderSimulation();
+      } else if (state.pedalPercent !== state.targetPedalPercent) {
+        state.pedalPercent = state.targetPedalPercent;
+        renderSimulation();
+      }
+
+      requestAnimationFrame(animationLoop);
+    }
+
+    // --- 4. USER INTERACTION HANDLERS ---
+    function setStepState(step) {
+      state.autoCycle = false;
+      updateAutoCycleButtonUI();
+      highlightStepButtons(step);
+
+      if (step === 1) {
+        state.targetPedalPercent = 0;
+      } else if (step === 2) {
+        state.targetPedalPercent = 100;
+      } else if (step === 3) {
+        // If already at 0, briefly set to 85% so user sees the upward spring return!
+        if (state.pedalPercent < 20) {
+          state.pedalPercent = 90;
+        }
+        state.targetPedalPercent = 0;
+      }
+      renderSimulation();
+    }
+
+    function highlightStepButtons(step) {
+      state.currentStep = step;
+      const titles = {
+        1: 'สถานะ: 1. วางกล้วย (Place Mode)',
+        2: 'สถานะ: 2. เหยียบกดทับ (Pressing to Mechanical Stop)',
+        3: 'สถานะ: 3. คลายแป้นเหยียบ (Spring Auto-Return)'
+      };
+      const dotColors = {
+        1: 'w-2.5 h-2.5 rounded-full bg-yellow-400',
+        2: 'w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping',
+        3: 'w-2.5 h-2.5 rounded-full bg-emerald-400'
+      };
+      document.getElementById('stateBadgeTitle').textContent = titles[step];
+      document.getElementById('stateBadgeDot').className = dotColors[step];
+
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`stepBtn-${i}`);
+        const badge = btn.querySelector('span');
+        if (i === step) {
+          btn.className = 'group relative flex flex-col items-start p-3 rounded-xl border-2 border-yellow-400 bg-yellow-400/10 text-left transition-all';
+          badge.className = 'text-xs font-mono font-bold px-2 py-0.5 rounded bg-yellow-400 text-slate-950';
+        } else {
+          btn.className = 'group relative flex flex-col items-start p-3 rounded-xl border-2 border-slate-800 bg-slate-950/70 hover:border-slate-700 text-left transition-all';
+          badge.className = 'text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300';
+        }
+      }
+    }
+
+    function startHoldPedal(e) {
+      if (e) e.preventDefault();
+      state.autoCycle = false;
+      updateAutoCycleButtonUI();
+      state.isHoldingPedal = true;
+      highlightStepButtons(2);
+    }
+
+    function releaseHoldPedal(e) {
+      if (e) e.preventDefault();
+      if (!state.isHoldingPedal) return;
+      state.isHoldingPedal = false;
+      highlightStepButtons(3);
+      state.targetPedalPercent = 0;
+    }
+
+    // Spacebar keyboard shortcut for realistic foot pedal stepping
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        if (!state.isHoldingPedal) startHoldPedal();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        releaseHoldPedal();
+      }
+    });
+
+    function onManualSliderInput(val) {
+      state.autoCycle = false;
+      updateAutoCycleButtonUI();
+      const num = parseFloat(val);
+      state.pedalPercent = num;
+      state.targetPedalPercent = num;
+      if (num === 0) highlightStepButtons(1);
+      else if (num >= 90) highlightStepButtons(2);
+      renderSimulation();
+    }
+
+    function toggleAutoCycle() {
+      state.autoCycle = !state.autoCycle;
+      state.autoPhase = 0;
+      updateAutoCycleButtonUI();
+    }
+
+    function updateAutoCycleButtonUI() {
+      const btn = document.getElementById('btnAutoCycle');
+      const icon = document.getElementById('autoCycleIcon');
+      const txt = document.getElementById('autoCycleText');
+      if (state.autoCycle) {
+        btn.className = 'px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1.5';
+        icon.textContent = '⏸️';
+        txt.textContent = 'กำลังจำลองอัตโนมัติ (หยุด)';
+      } else {
+        btn.className = 'px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5';
+        icon.textContent = '▶️';
+        txt.textContent = 'จำลองอัตโนมัติ (Auto Loop)';
+      }
+    }
+
+    function inspectPart(partKey) {
+      const info = partDescriptions[partKey];
+      if (!info) return;
+      document.getElementById('partInspectorTitle').textContent = info.title;
+      document.getElementById('partInspectorDesc').textContent = info.desc;
+    }
+
+    function toggleCallouts() {
+      state.showCallouts = !state.showCallouts;
+      document.getElementById('calloutGroup').style.display = state.showCallouts ? 'block' : 'none';
+      document.getElementById('calloutBtnText').textContent = state.showCallouts
+        ? 'ซ่อนป้ายชิ้นส่วน (Labels)'
+        : 'แสดงป้ายชิ้นส่วน (Labels)';
+    }
+
+    function toggleCanvasTheme() {
+      state.lightCanvas = !state.lightCanvas;
+      const container = document.getElementById('canvasContainer');
+      const icon = document.getElementById('themeIcon');
+      const text = document.getElementById('themeText');
+      if (state.lightCanvas) {
+        container.classList.remove('cad-grid');
+        container.classList.add('cad-light-grid');
+        icon.textContent = '🌙';
+        text.textContent = 'โหมดพื้นหลังมืด (Dark CAD)';
+      } else {
+        container.classList.remove('cad-light-grid');
+        container.classList.add('cad-grid');
+        icon.textContent = '☀️';
+        text.textContent = 'โหมดพื้นหลังสว่าง (ตามสไลด์)';
+      }
+    }
+
+    function switchMainTab(tabName) {
+      ['simulator', 'sequence', 'business'].forEach((t) => {
+        const sec = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`tabBtn-${t}`);
+        if (t === tabName) {
+          sec.classList.remove('hidden');
+          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-400 text-slate-950 transition';
+        } else {
+          sec.classList.add('hidden');
+          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition';
+        }
+      });
+    }
+
+    // --- 5. PARAMETER UPDATES ---
+    function updateEngineeringParams() {
+      state.washerMm = parseFloat(document.getElementById('paramWasherMm').value);
+      state.footForceN = parseFloat(document.getElementById('paramFootForce').value);
+      state.leverRatio = parseFloat(document.getElementById('paramLeverRatio').value);
+      state.springK = parseFloat(document.getElementById('paramSpringK').value);
+      state.bananaCount = parseInt(document.getElementById('paramBananaCount').value, 10);
+
+      const washerCount = Math.max(1, Math.round(state.washerMm / 2.5));
+      document.getElementById('valWasherMm').textContent = `${state.washerMm.toFixed(1)} mm (แหวน ~${washerCount} วง)`;
+      document.getElementById('valFootForce').textContent = `${state.footForceN} N (~${Math.round(state.footForceN / 9.81)} kgf)`;
+      document.getElementById('valLeverRatio').textContent = `1 : ${state.leverRatio.toFixed(1)}`;
+      document.getElementById('valSpringK').textContent = `${state.springK.toLocaleString()} N/m`;
+      document.getElementById('valBananaCount').textContent = `${state.bananaCount} ลูก/ครั้ง`;
+
+      renderSimulation();
+    }
+
+    function setRipeness(level) {
+      state.ripeness = level;
+      ['firm', 'optimal', 'soft'].forEach((r) => {
+        const btn = document.getElementById(`ripeBtn-${r}`);
+        if (r === level) {
+          btn.className = 'px-2.5 py-1 rounded-lg border border-yellow-400 bg-yellow-400/15 text-yellow-300 font-semibold transition';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition';
+        }
+      });
+      renderSimulation();
+    }
+
+    function resetDefaultParams() {
+      document.getElementById('paramWasherMm').value = 5.0;
+      document.getElementById('paramFootForce').value = 140;
+      document.getElementById('paramLeverRatio').value = 3.0;
+      document.getElementById('paramSpringK').value = 1200;
+      document.getElementById('paramBananaCount').value = 2;
+      setRipeness('optimal');
+      updateEngineeringParams();
+    }
+
+    function updateRoiCalc() {
+      const hours = parseFloat(document.getElementById('roiHoursInput').value);
+      const profitPerBox = parseFloat(document.getElementById('roiProfitInput').value);
+      document.getElementById('roiHoursVal').textContent = `${hours} ชั่วโมง/วัน`;
+      document.getElementById('roiProfitVal').textContent = `${profitPerBox} บาท/กล่อง`;
+
+      // Traditional produces ~3.5 pcs/min, KluayPress produces ~18 pcs/min (~4 bananas per box)
+      const extraBananasPerMin = 12;
+      const extraBoxesPerDay = Math.round((extraBananasPerMin * 60 * hours) / 16);
+      const extraDailyProfit = extraBoxesPerDay * profitPerBox;
+      const paybackDays = Math.max(3, Math.round(8950 / extraDailyProfit));
+
+      document.getElementById('roiExtraBoxes').textContent = `+${extraBoxesPerDay} กล่อง/วัน (+${extraDailyProfit.toLocaleString()} ฿/วัน)`;
+      document.getElementById('roiPaybackDays').textContent = `~${paybackDays} วัน (คืนทุนไวมาก)`;
+    }
+
+    // --- 6. GEMINI AI ENGINEERING ANALYZER ---
+    function generateInstantEngineeringReport(mode, customQuery = '') {
+      const phys = calculatePhysics();
+      const ripenessText = state.ripeness === 'firm' ? 'กล้วยห่าม (เนื้อแน่น)' : (state.ripeness === 'optimal' ? 'กล้วยสุกพอดี (มาตรฐาน)' : 'กล้วยงอม (เนื้อนิ่ม)');
+
+      if (mode === 'mechanics') {
+        return `
+          <div class="p-2.5 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-300 font-semibold">
+            📐 รายงานวิเคราะห์กลศาสตร์เครื่องจักรกลและวัสดุ (Shigley & Hibbeler Analysis)
+          </div>
+          <ul class="list-disc pl-4 space-y-1 text-slate-300">
+            <li><strong>การทดแรงคานแป้นเหยียบ (Mechanical Advantage):</strong> ตั้งค่าอัตราทดไว้ที่ <span class="text-yellow-400 font-mono">1:${state.leverRatio.toFixed(1)}</span> เมื่อออกแรงเท้าเหยียบ <span class="font-mono">${state.footForceN} N</span> จะสร้างแรงดึงที่ขาเชื่อมต่อได้ถึง <span class="font-mono">${Math.round(state.footForceN * state.leverRatio)} N</span> และเมื่อหักล้างแรงต้านสปริง (<span class="font-mono">${phys.springForceN} N</span>) จะเหลือแรงกดสุทธิที่แผ่นทับกล้วย <span class="text-emerald-400 font-mono font-bold">${phys.netPressForceN} N</span></li>
+            <li><strong>ความแข็งแรงของโครงสร้าง:</strong> แผ่นสแตนเลสเสริมหลังแผ่นอะคริลิคช่วยรับแรงดัด (Bending Stress) ไม่ให้แผ่นอะคริลิคโก่งตัวตรงกลาง ส่วนแกนเหล็กกลมขนาด 2 นิ้วและกระบอกเลื่อนล็อคแกนช่วยป้องกันโมเมนต์บิดตัว (Torsion) ได้อย่างสมบูรณ์</li>
+            <li><strong>ข้อเสนอแนะเชิงวิศวกรรม:</strong> ค่าคงที่สปริง <span class="font-mono">k = ${state.springK} N/m</span> ให้เวลาดีดกลับในขั้นตอน <em>"คลาย"</em> เพียง <span class="font-mono">${phys.returnTimeSec} วินาที</span> ซึ่งเป็นจุดสมดุลที่ไม่ต้านเท้าผู้ใช้งานมากเกินไป</li>
+          </ul>
+        `;
+      } else if (mode === 'quality') {
+        const statusMsg = state.ripeness === 'soft' && state.washerMm < 3.5
+          ? `<span class="text-amber-400 font-bold">⚠️ แจ้งเตือน: กล้วยงอมมีความชื้นสูง การตั้งแหวนรองที่ ${state.washerMm} mm อาจทำให้เนื้อกล้วยฉีกขาด แนะนำให้เพิ่มแหวนรองเป็น 4.5 - 5.5 mm</span>`
+          : `<span class="text-emerald-400 font-bold">✅ เหมาะสมดีเยี่ยม: แหวนรอง ${state.washerMm} mm สัมพันธ์กับ${ripenessText} ได้แผ่นกล้วยสม่ำเสมอ (ความคลาดเคลื่อน ±0-5%)</span>`;
+        return `
+          <div class="p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 font-semibold">
+            🍌 รายงานวิเคราะห์การควบคุมคุณภาพและลดของเสีย (Food Safety & Quality Control)
+          </div>
+          <ul class="list-disc pl-4 space-y-1 text-slate-300">
+            <li><strong>ผลการตรวจสอบแหวนรอง (Mechanical Stop):</strong> ${statusMsg}</li>
+            <li><strong>ผลต่อกระบวนการอบแห้ง (Dehydration Uniformity):</strong> เมื่อความหนากล้วยเท่ากันที่ <span class="font-mono text-yellow-400">${state.washerMm.toFixed(1)} mm</span> ทุกชิ้น ความชื้นจะระเหยในอัตราเท่ากันเมื่อนำเข้าตู้อบลมร้อน แก้ปัญหาสุกไม่พร้อมกันของไม้ทับแบบเก่าที่คลาดเคลื่อนถึง ±20-40%</li>
+            <li><strong>มาตรฐาน B2B & แฟรนไชส์:</strong> แผ่นอะคริลิค Food Grade ลดการสะสมของเชื้อราและแบคทีเรีย พร้อมขอรับรองมาตรฐาน อย. และ OTOP ได้ทันที</li>
+          </ul>
+        `;
+      } else if (mode === 'ergonomics') {
+        return `
+          <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-semibold">
+            🦵 รายงานวิเคราะห์การยศาสตร์และกำลังการผลิต (NIOSH / OSHA Ergonomics)
+          </div>
+          <ul class="list-disc pl-4 space-y-1 text-slate-300">
+            <li><strong>การลดความเสี่ยงโรค RSI:</strong> การเปลี่ยนภาระงานจากข้อมือและหัวไหล่มาใช้การเหยียบด้วยกล้ามเนื้อขามัดใหญ่ด้วยแรงเพียง <span class="font-mono">${Math.round(state.footForceN / 9.81)} kgf</span> ช่วยขยายเวลาทำงานต่อเนื่องก่อนล้าจาก <strong>0.5-1 ชม.</strong> เป็น <strong>4-6 ชม.</strong></li>
+            <li><strong>กำลังการผลิต (Lean Cycle Time):</strong> การกดครั้งละ <span class="font-mono">${state.bananaCount} ลูก</span> ร่วมกับสปริงดึงกลับอัตโนมัติในขั้นตอน <em>"คลาย"</em> ทำให้ได้ผลผลิตสูงถึง <span class="text-yellow-400 font-mono font-bold">${phys.throughputPerMin} ชิ้น/นาที</span> (เพิ่มขึ้นกว่า 400% เมื่อเทียบกับไม้ทับดั้งเดิมที่ได้ 3-4 ชิ้น/นาที)</li>
+          </ul>
+        `;
+      } else {
+        return `
+          <div class="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 font-semibold">
+            📡 แนวทางอัปเกรด KluayPress สู่ Smart AI Machine (IoT & Computer Vision)
+          </div>
+          <ul class="list-disc pl-4 space-y-1 text-slate-300">
+            <li><strong>1. Smart Force & Stroke Sensor:</strong> ติดตั้ง Load Cell ที่ข้อต่อแป้นเหยียบและ Hall-Effect Limit Switch ที่แหวนรองปรับความหนา เพื่อนับจำนวนรอบการผลิตอัตโนมัติและแจ้งเตือนเมื่อกดลงสุดระยะ Stopper</li>
+            <li><strong>2. AI Vision Quality Inspection:</strong> ใช้กล้องมุมบนเหนือแผ่นอะคริลิคใส วิเคราะห์พื้นที่ผิวและเส้นผ่านศูนย์กลางของกล้วยหลังกดทับ เพื่อคัดเกรดส่งแฟรนไชส์</li>
+            <li><strong>3. Predictive Maintenance:</strong> วิเคราะห์ความเร็วในการดีดกลับของสปริง (<span class="font-mono">${phys.returnTimeSec} s</span>) หากค่าความหน่วงเพิ่มขึ้นเกิน 20% ระบบจะแจ้งเตือนให้เติมจาระบี Food Grade หรือเปลี่ยนอะไหล่สปริง</li>
+          </ul>
+        `;
+      }
+    }
+
+    async function callGeminiWithBackoff(promptText, systemInstructionText) {
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+      const payload = {
+        contents: [{ parts: [{ text: promptText }] }],
+        systemInstruction: { parts: [{ text: systemInstructionText }] }
+      };
+
+      const delays = [1000, 2000, 4000];
+      for (let attempt = 0; attempt <= delays.length; attempt++) {
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const result = await response.json();
+          const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) return text;
+          throw new Error('Empty response');
+        } catch (err) {
+          if (attempt === delays.length) return null;
+          await new Promise((r) => setTimeout(r, delays[attempt]));
+        }
+      }
+      return null;
+    }
+
+    async function runAiAnalysis(mode) {
+      const box = document.getElementById('aiResponseBox');
+      const customInput = document.getElementById('customAiInput').value.trim();
+      const phys = calculatePhysics();
+
+      // Show instant engineering calculation first so the user gets immediate value
+      const instantHtml = generateInstantEngineeringReport(mode === 'custom' ? 'mechanics' : mode, customInput);
+      box.innerHTML = `
+        ${instantHtml}
+        <div id="aiLiveStreamingBadge" class="mt-2 pt-2 border-t border-slate-800 flex items-center gap-2 text-sky-400 text-[11px]">
+          <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+          <span>กำลังประมวลผลคำแนะนำเชิงลึกเพิ่มเติมจาก Gemini AI Engineer...</span>
+        </div>
+      `;
+
+      const systemPrompt = `คุณคือวิศวกรเครื่องกลและผู้เชี่ยวชาญด้าน AI ที่ปรึกษาประจำทีม "ตึง ตึง โป๊ะ" คณะวิศวกรรมศาสตร์ มหาวิทยาลัยทักษิณ ผู้พัฒนาเครื่อง KluayPress (เครื่องกดขึ้นรูปกล้วยแบบเท้าเหยียบควบคุมความหนาด้วยแหวนรอง Mechanical Stop และสปริงดึงกลับ) ตอบกลับเป็นภาษาไทยที่กระชับ ชัดเจน เป็นข้อๆ เชิงวิศวกรรม (ไม่เกิน 120 คำ)`;
+
+      const telemetryContext = `พารามิเตอร์ปัจจุบันของเครื่อง KluayPress:
+- แหวนรองปรับความหนา (Mechanical Stop): ${state.washerMm} mm
+- แรงเหยียบเท้า: ${state.footForceN} N, อัตราทดคาน: 1:${state.leverRatio}
+- แรงกดสุทธิที่แผ่นทับ: ${phys.netPressForceN} N
+- ค่าคงที่สปริงดึงกลับ: ${state.springK} N/m (แรงต้านสปริง ${phys.springForceN} N, เวลาคืนกลับ ${phys.returnTimeSec} วินาที)
+- ความสุกกล้วย: ${state.ripeness}, จำนวนกล้วยต่อครั้ง: ${state.bananaCount} ลูก, กำลังการผลิต: ${phys.throughputPerMin} ชิ้น/นาที`;
+
+      let taskQuestion = '';
+      if (mode === 'mechanics') {
+        taskQuestion = 'วิเคราะห์ความเหมาะสมของแรงกด อัตราทดคานแป้นเหยียบ และสปริงดึงกลับในรอบการทำงาน วาง-เหยียบ-คลาย พร้อมข้อเสนอแนะเชิงวิศวกรรม';
+      } else if (mode === 'quality') {
+        taskQuestion = 'วิเคราะห์การตั้งค่าแหวนรองปรับความหนากับความสุกของกล้วย เพื่อลดของเสียและควบคุมมาตรฐานกล้วยอบธัญพืชสำหรับลูกค้าแฟรนไชส์ B2B';
+      } else if (mode === 'ergonomics') {
+        taskQuestion = 'วิเคราะห์ด้านการยศาสตร์ (Ergonomics) การลดอาการปวดเมื่อย และประสิทธิภาพการเพิ่มกำลังการผลิต 400%';
+      } else if (mode === 'smart_ai') {
+        taskQuestion = 'แนะนำการติดตั้งเซนเซอร์ IoT และ AI Computer Vision บนโครงสร้างเครื่อง KluayPress นี้เพื่อยกระดับสู่อุตสาหกรรมอาหารแปรรูป';
+      } else {
+        taskQuestion = customInput || 'วิเคราะห์ภาพรวมการตั้งค่าเครื่อง KluayPress ปัจจุบันและแนะนำการปรับปรุง';
+      }
+
+      const aiText = await callGeminiWithBackoff(`${telemetryContext}\n\nคำถาม: ${taskQuestion}`, systemPrompt);
+      const loadingEl = document.getElementById('aiLiveStreamingBadge');
+
+      if (aiText && loadingEl) {
+        const formattedAi = aiText
+          .replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>')
+          .replace(/\n/g, '<br/>');
+        loadingEl.outerHTML = `
+          <div class="mt-2.5 pt-2.5 border-t border-slate-800 text-slate-200">
+            <div class="text-[11px] font-bold text-sky-400 mb-1">✨ คำแนะนำเพิ่มเติมจาก Gemini AI Engineer:</div>
+            <div class="text-xs leading-relaxed text-slate-300">${formattedAi}</div>
+          </div>
+        `;
+      } else if (loadingEl) {
+        loadingEl.remove();
+      }
+    }
+
+    // --- 7. INITIALIZE ON WINDOW LOAD ---
+    window.onload = function () {
+      updateEngineeringParams();
+      updateRoiCalc();
+      document.getElementById('aiResponseBox').innerHTML = generateInstantEngineeringReport('mechanics');
+      requestAnimationFrame(animationLoop);
+    };
+  </script>
+</body>
+</html>
